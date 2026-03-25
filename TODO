@@ -17,3 +17,4 @@ X Images fuck up their aspect ratio
 - The Inventory and Memory buttons should always be availible, but their edit buttons should be locked if the background tasks are working
 - Somewhere we lost the grey line above the user mesage
 - When we force the user message up we should make room for the planning sprite
+- Refactor load/create pipleine with the roleplay and story object
