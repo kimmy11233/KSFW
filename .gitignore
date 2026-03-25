@@ -3,6 +3,7 @@ venv/
 tmp/*
 saves/*
 Story Templates/*
+!Story Templates/__BLANK__
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

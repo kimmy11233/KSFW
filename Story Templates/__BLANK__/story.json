@@ -1,0 +1,9 @@
+{
+    "title": "",
+    "initial_prompt": "",
+    "initial_inventory": "",
+    "config": {
+        "compression_turn": 1,
+        "image_generation": false
+    }
+}
