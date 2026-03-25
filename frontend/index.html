@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kimmy's Statistically Finite Worlds</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app-container">
+        <div id="message-panel">
+            <div id="planner-thinking" class="planner-hidden">
+                <div class="planner-orbs">
+                    <span class="planner-orb"></span>
+                    <span class="planner-orb"></span>
+                    <span class="planner-orb"></span>
+                </div>
+                <div class="planner-label">Planning<span class="planner-ellipsis"></span></div>
+            </div>
+            <div id="messages"></div>
+            <form id="prompt-form">
+                <textarea id="prompt-input" placeholder="Enter your message... (shift + enter for newline)" autocomplete="off"></textarea>
+                <button type="submit" id="prompt-send">Send</button>
+            </form>
+        </div>
+        <div id="side-panel">
+            <div id="story-info-box">
+                <div id="app-title">Kimmy's Statistically Finite Worlds</div>
+                <div id="story-info-separator"></div>
+                <div id="story-info-row">
+                    <div id="story-title">Story Title</div>
+                    <div id="turn-number"><span id="turn-label">Turn</span>:&nbsp;<span id="turn-value">1</span></div>
+                </div>
+            </div>
+            <div id="image-container">
+                <img id="story-image" src="" alt="Story Scene" />
+            </div>
+            <div id="control-panel">
+                <h3>Control Panel</h3>
+                <div class="control-buttons">
+                    <button class="control-btn" id="btn-inventory">Inventory</button>
+                    <button class="control-btn" id="btn-memory">Memory</button>
+                    <button class="control-btn" id="btn-stories">Manage Stories</button>
+                </div>
+            </div>
+
+            <!-- Inventory Modal -->
+            <div id="modal-inventory" class="modal-overlay" aria-hidden="true">
+                <div class="modal-box">
+                    <div class="modal-header">
+                        <span class="modal-title">Inventory</span>
+                        <button class="modal-close" data-modal="modal-inventory">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <pre id="inventory-display" class="modal-pre"></pre>
+                        <textarea id="inventory-edit" class="modal-textarea" style="display:none;"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="modal-btn secondary" id="inventory-edit-btn">Edit</button>
+                        <button class="modal-btn primary" id="inventory-save-btn" style="display:none;">Save</button>
+                        <button class="modal-btn ghost" id="inventory-cancel-btn" style="display:none;">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Memory Modal -->
+            <div id="modal-memory" class="modal-overlay" aria-hidden="true">
+                <div class="modal-box">
+                    <div class="modal-header">
+                        <span class="modal-title">Memory</span>
+                        <button class="modal-close" data-modal="modal-memory">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <pre id="memory-display" class="modal-pre"></pre>
+                        <textarea id="memory-edit" class="modal-textarea" style="display:none;"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="modal-btn secondary" id="memory-edit-btn">Edit</button>
+                        <button class="modal-btn primary" id="memory-save-btn" style="display:none;">Save</button>
+                        <button class="modal-btn ghost" id="memory-cancel-btn" style="display:none;">Cancel</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Manage Stories Modal -->
+            <div id="modal-stories" class="modal-overlay" aria-hidden="true">
+                <div class="modal-box modal-box--stories">
+                    <div class="modal-header">
+                        <span class="modal-title">Manage Stories</span>
+                        <button class="modal-close" data-modal="modal-stories">&times;</button>
+                    </div>
+                    <div class="stories-tab-bar">
+                        <button class="stories-tab active" data-tab="load">Load Saved</button>
+                        <button class="stories-tab" data-tab="new">New from Template</button>
+                    </div>
+                    <div class="modal-body stories-body">
+                        <!-- Load Saved tab -->
+                        <div id="stories-tab-load" class="stories-tab-panel">
+                            <p class="stories-hint">Select a saved story to load it.</p>
+                            <ul id="stories-saved-list" class="stories-list"></ul>
+                            <div id="stories-saved-empty" class="stories-empty" style="display:none;">No saved stories found.</div>
+                            <div id="stories-saved-loading" class="stories-loading">Loading&hellip;</div>
+                        </div>
+                        <!-- New from Template tab -->
+                        <div id="stories-tab-new" class="stories-tab-panel" style="display:none;">
+                            <p class="stories-hint">Choose a template to start a new story.</p>
+                            <ul id="stories-template-list" class="stories-list"></ul>
+                            <div id="stories-template-empty" class="stories-empty" style="display:none;">No templates found.</div>
+                            <div id="stories-template-loading" class="stories-loading">Loading&hellip;</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div id="stories-status" class="modal-saving" style="display:none;margin-right:auto;"></div>
+                        <button class="modal-btn ghost" data-modal="modal-stories" onclick="closeModal('modal-stories')">Close</button>
+                    </div>
+                </div>
+            </div>
+
+
+            <div id="agent-status">
+                <h3>Agent Status</h3>
+                <ul id="agent-list"></ul>
+                <div id="last-response-time"></div>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

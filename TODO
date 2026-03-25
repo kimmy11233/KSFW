@@ -1,0 +1,14 @@
+X? Better planning agent
+X Scroll is forced to end of messages on each message poll even if nothing changes. This can make it hard to read messages when they are super long.
+- Story saving (X), loading (X), creating from template (X)
+X Embedded story maker
+- More involved trigger system
+X As text is rendered on the front end it moves making it very hard to read. We want the cursor to start at the top of the screen and write to the bottom. If it is more than a screenful it should write into the space below
+X Messages are popping if they are shorter than a screen length
+X Checkers
+X APplying diffs to frontend
+- Add better character mannager
+- Proper Noun system, location and characters, maybe significant items too?
+- Better character selection
+- Images fuck up their aspect ratio
+- Hovering over edited text should show the violation 
