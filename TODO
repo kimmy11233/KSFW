@@ -1,6 +1,6 @@
 X? Better planning agent
 X Scroll is forced to end of messages on each message poll even if nothing changes. This can make it hard to read messages when they are super long.
-- Story saving (X), loading (X), creating from template (X)
+X Story saving (X), loading (X), creating from template (X)
 X Embedded story maker
 - More involved trigger system
 X As text is rendered on the front end it moves making it very hard to read. We want the cursor to start at the top of the screen and write to the bottom. If it is more than a screenful it should write into the space below
@@ -14,7 +14,9 @@ X Images fuck up their aspect ratio
 - Hovering over edited text should show the violation 
 - conditions in inventory never expires, update time prediction to give an actual time such that inventory can remove conditions over time.
 - Add a little grey errow in the bottom left to move you to the bottom of the story
-- The Inventory and Memory buttons should always be availible, but their edit buttons should be locked if the background tasks are working
-- Somewhere we lost the grey line above the user mesage
-- When we force the user message up we should make room for the planning sprite
-- Refactor load/create pipleine with the roleplay and story object
+X The Inventory and Memory buttons should always be availible, but their edit buttons should be locked if the background tasks are working. Editing memory now works(X)
+X? Somewhere we lost the grey line above the user mesage
+X? When we force the user message up we should make room for the planning sprite, maybe like a few pixels more
+X Refactor load/create pipleine with the roleplay and story object
+- Proper noun system that reads a chat determins the current proper nouns, which is referenced to actual objects. A generater generates the objects when a new thing comes. 
+X Backup system
