@@ -483,14 +483,16 @@ class Roleplay():
         return await self.AGENTS[INVENTORY_ID].generate_text_in_background(
             f"## Current Inventory\n{self.STORY.inventory}\n"
             f"---\n"
-            f"## Writer Output\n{writer_output}\n",
+            f"## Writer Output\n{writer_output}\n"
+            f'## Last Time Estimate and Time\n{self.STORY.last_time_est}\n',
             temperature=0.1,
         )
 
     async def _call_time_update(self, writer_output: str) -> str:
         """Time estimation agent. Returns time-elapsed string."""
         return await self.AGENTS[TIME_ID].generate_text_in_background(
-            f"## Writer Output\n{writer_output}\n",
+            f"## Writer Output\n{writer_output}\n"
+            f"## Last Time Estimate and Time\n{self.STORY.last_time_est}\n",
             temperature=0.1,
         )
 
@@ -613,16 +615,16 @@ class Roleplay():
     async def _update_background_data(self, final_output: str):
         print("[Background] Updating state")
 
+        time_est    = await self._call_time_update(final_output)
+        self.STORY.last_time_est = time_est
+
         memory_task   = asyncio.create_task(self._call_memory_update(final_output))
         inventory_task = asyncio.create_task(self._call_inventory_update(final_output))
-        time_task     = asyncio.create_task(self._call_time_update(final_output))
-
-        _, inventory, time_est = await asyncio.gather(
-            memory_task, inventory_task, time_task
+        _, inventory = await asyncio.gather(
+            memory_task, inventory_task,
         )
 
-        self.STORY.inventory     = inventory
-        self.STORY.last_time_est = time_est
+        self.STORY.inventory = inventory
 
         for agent in self.AGENTS.values():
             agent.write_last_response_to_file()

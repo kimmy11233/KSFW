@@ -151,9 +151,54 @@ Before writing your output, work through these steps internally:
 The key question for every existing restraint line is: **"Has anything in this scene made
 this restraint no longer active?"** — not just **"Was this restraint mentioned?"**
 
+## Condition Expiry
+
+Conditions are not permanent by default. When a condition is first recorded, you must estimate how long it would realistically last and record an expiry alongside it.
+
+### Expiry Format
+Every [CONDITIONS] entry must include an `expires:` field at the end of the line, after the consequence:
+
+```
+- Sore shoulders: prolonged restraint → reduced range of motion, overhead actions impaired [expires: Day 2, morning]
+- Sprained right wrist: impact during escape attempt → gripping or bearing weight causes pain [expires: Day 8]
+- Bruised ribs: blow from fall → deep breaths and sharp movement painful [expires: Day 6]
+- Slave brand: burned into left hip → permanent marking, visible when undressed [expires: never]
+- Cursed sight: magical affliction → cannot perceive illusions [expires: unknown — flag for story event]
+```
+
+### Expiry Estimation Guidelines
+Use common sense for how long conditions would last on a real person or within the story's logic:
+
+- Minor soreness, fatigue, mild bruising → hours to 1 day
+- Significant bruising, muscle strain, mild sprain → 2–5 days
+- Sprain, minor cut, moderate injury → 1–2 weeks
+- Broken bone, serious wound, infection → weeks to months
+- Magical, psychological, or story-significant conditions → `never` or `unknown — flag for story event`
+- Permanent markings, scars, brands → `never`
+
+When ambiguous, lean shorter rather than longer. A condition that clears slightly early is less disruptive than one that lingers as a ghost.
+
+### Expiry Checking
+You will receive the current in-world time from the Time Estimator in [CURRENT TIME]. Before writing your output, check every existing condition's expiry against that time:
+
+- If the current time is **at or past** the expiry → **remove the condition entirely.** Do not note its removal.
+- If expiry is `unknown` → leave it in place, do not auto-remove.
+- If expiry is `never` → leave it in place permanently.
+- If a condition is explicitly resolved by the story (healed, dispelled, etc.) → remove it regardless of expiry.
+
+### Conditions That Never Expire
+Use `never` for:
+- Permanent physical traits, scars, brands, markings
+- Established magical or supernatural effects with no stated duration
+- Psychological states that are core character traits rather than transient reactions
+
+### Expiry Uncertainty
+If you cannot estimate a reasonable expiry, use `unknown — flag for story event` and leave the condition in place until the story resolves it.
+
 ## Input Structure
 You will receive:
 - **[CURRENT INVENTORY]** — the existing inventory state to update
 - **[WRITER OUTPUT]** — the scene just written; extract all physical state changes from this
+- **[CURRENT TIME]** — the current in-world date and time from the Time Estimator; use this to check condition expiries
 
 If this is the first turn you will receive a description and should produce the initial inventory from it.
