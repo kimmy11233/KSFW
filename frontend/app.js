@@ -186,10 +186,6 @@ function updatePromptSendState(agentStatus) {
         promptSend.disabled = disable;
         promptSend.style.opacity = disable ? 0.5 : 1;
     }
-    ["btn-inventory", "btn-memory"].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) btn.disabled = disable;
-    });
 }
 
 
@@ -428,8 +424,8 @@ function setInventoryEditMode(content) {
 }
 
 document.getElementById("btn-inventory").addEventListener("click", async () => {
-    if (isInputLocked()) return;
     openModal("modal-inventory");
+    updateInventoryEditBtnState();
     const data = await fetchMessages();
     setInventoryViewMode(data.inventory || "");
 });
@@ -438,6 +434,15 @@ document.getElementById("inventory-edit-btn").addEventListener("click", () => {
     const current = document.getElementById("inventory-display").textContent;
     setInventoryEditMode(current === "(empty)" ? "" : current);
 });
+
+function updateInventoryEditBtnState() {
+    const btn = document.getElementById("inventory-edit-btn");
+    if (!btn) return;
+    const locked = isInputLocked();
+    btn.disabled = locked;
+    btn.style.opacity = locked ? 0.5 : 1;
+    btn.title = locked ? "Can't edit while mid turn" : "";
+}
 document.getElementById("inventory-cancel-btn").addEventListener("click", async () => {
     const data = await fetchMessages();
     setInventoryViewMode(data.inventory || "");
@@ -552,6 +557,13 @@ document.getElementById("inventory-save-btn").addEventListener("click", async ()
         renderView();
     }
 
+    function updateMemoryEditBtnState() {
+        const locked = isInputLocked();
+        editBtn.disabled = locked;
+        editBtn.style.opacity = locked ? 0.5 : 1;
+        editBtn.title = locked ? "Can't edit while mid turn" : "";
+    }
+
     // ── Button handlers ────────────────────────────────────────────────────
     editBtn.addEventListener("click", () => {
         if (isInputLocked()) return;
@@ -602,8 +614,8 @@ document.getElementById("inventory-save-btn").addEventListener("click", async ()
 
     // ── Open modal ─────────────────────────────────────────────────────────
     document.getElementById("btn-memory").addEventListener("click", async () => {
-        if (isInputLocked()) return;
         openModal("modal-memory");
+        updateMemoryEditBtnState();
         const data = await fetchMessages();
         memoryData = (data && data.memory) ? { ...data.memory } : {};
         switchSection(activeSection);
