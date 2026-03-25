@@ -1,27 +1,31 @@
 import json
 from src.Memory import Memory
+import os
 
 class Story():
     def __init__(self, directory: str):
 
         self.story_template_path = directory
-        with open(f"{directory}/story.json", "r") as f:
-            story_data = json.load(f)
+        if  os.path.exists(f"{directory}/story.json"):
+            with open(f"{directory}/story.json", "r") as f:
+                config = json.load(f)
+        else:
+            config = {}
 
-        self.title = story_data.get("title", "Untitled Story")
+        self.title = config.get("title", "Untitled Story")
         self.messages: list[Message] = []
         self.memory = Memory()
         self.turn_number = 0
         self.message_cutoff_index = 0
         self.last_time_est = 'STORY START, no time has passed yet'
-        self.inventory = story_data.get("initial_inventory", "")
+        self.inventory = config.get("initial_inventory", "")
 
-        self.base_plan = story_data.get("baseplan", "")
+        self.base_plan = config.get("baseplan", "")
         self.base_plan_is_valid = bool(self.base_plan)
 
-        self.config = story_data.get("config", {})
+        self.config = config.get("config", {})
 
-        self.messages.append(Message("System", story_data.get("initial_prompt", "")))
+        self.messages.append(Message("System", config.get("initial_prompt", "")))
         
 
     def to_dict(self):
