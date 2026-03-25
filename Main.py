@@ -108,12 +108,30 @@ async def overwrite_inventory(req: Request):
 
 @app.post("/api/overwrite_memory")
 async def overwrite_memory(req: Request):
-    data = await req.json()
-    new_memory = data.get("memory", "")
     assert ROLEPLAY_SYSTEM is not None
-    ROLEPLAY_SYSTEM.STORY.memory = new_memory
+
+    data = await req.json()
+    memory_sector = data.get("memory_sector", "")
+    memory_sector = 'characters' if memory_sector == "characters_raw" else memory_sector
+    if memory_sector not in ["events", "facts", "rules", "characters"]:
+        return JSONResponse({"error": "Invalid memory sector"}, status_code=400)
+
+    new_memory = data.get("memory", "")
+    if memory_sector == "events":
+        if type(new_memory) is not list:
+            return JSONResponse({"error": "Events memory must be a list of strings"}, status_code=400)
+        ROLEPLAY_SYSTEM.STORY.memory.overwrite_events(new_memory)
+    elif memory_sector == "facts":
+        if type(new_memory) is not list:
+            return JSONResponse({"error": "Facts memory must be a list of strings"}, status_code=400)
+
+        ROLEPLAY_SYSTEM.STORY.memory.overwrite_facts(new_memory)
+    elif memory_sector == "rules":
+        ROLEPLAY_SYSTEM.STORY.memory.overwrite_rules(new_memory)
+    elif memory_sector == "characters":
+        ROLEPLAY_SYSTEM.STORY.memory.overwrite_characters(new_memory)
     ROLEPLAY_SYSTEM.STORY.save(ROLEPLAY_SYSTEM.load_path)
-    return JSONResponse({"status": "success", "new_memory": ROLEPLAY_SYSTEM.STORY.memory})
+    return JSONResponse({"status": "success", "new_memory": ROLEPLAY_SYSTEM.STORY.memory.to_dict()})
 
 @app.get("/api/get_saved_stories")
 def get_saved_stories():

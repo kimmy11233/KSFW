@@ -598,11 +598,17 @@ document.getElementById("inventory-save-btn").addEventListener("click", async ()
         saveBtn.disabled = true;
 
         try {
-            await fetch(`${API_BASE}/overwrite_memory`, {
+            const res = await fetch(`${API_BASE}/overwrite_memory`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ memory: memoryData })
+                body: JSON.stringify({ 
+                    memory_sector: editingSection,
+                    memory: memoryData[editingSection]
+                })
             });
+            if (res.status === 400) {
+                console.error(`400 error returned from overwrite_memory, ${await res.text()}`);
+            }
             renderView();
         } catch (e) {
             console.error("Failed to save memory", e);

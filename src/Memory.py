@@ -29,6 +29,18 @@ class Memory:
             or ""
         )
 
+    def overwrite_events(self, new_events_blob: list[str]):
+        self.events = new_events_blob
+
+    def overwrite_facts(self, new_facts_blob: list[str]):
+        self.facts = new_facts_blob
+
+    def overwrite_rules(self, new_rules_blob: str):
+        self.rules = new_rules_blob.strip()
+
+    def overwrite_characters(self, new_characters_blob: str):
+        self.characters_raw = new_characters_blob.strip()
+
     def get_memory_summary(self) -> str:
         """
         Assembles the full memory block for injection into agent prompts.
