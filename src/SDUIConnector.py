@@ -7,7 +7,7 @@ class SDUIConnector(IImageConnector):
         self.base_url = base_url.rstrip('/')
 
 
-    async def txt2img(self, prompt, negative_prompt, steps=28, path="./tmp/temp.png"):
+    async def txt2img(self, prompt: str, negative_prompt: str, steps: int = 28, path: str = "./tmp/temp.png") -> str:
         payload = {
             "prompt": prompt,
             "negative_prompt": negative_prompt,

@@ -13,6 +13,10 @@ const storyTitleDiv = document.getElementById("story-title");
 const turnValueSpan = document.getElementById("turn-value");
 const plannerThinking = document.getElementById("planner-thinking");
 
+// If for whatever reason (missing image) we can't load an image, just hide it
+storyImage.addEventListener('load', () => { storyImage.style.display = ''; });
+storyImage.addEventListener('error', () => { storyImage.style.display = 'hidden'; });
+
 // Example: updateStoryInfo('My Story', 5)
 function updateStoryInfo(title, turn) {
     if (storyTitleDiv) storyTitleDiv.textContent = title;
@@ -668,13 +672,16 @@ document.getElementById("inventory-save-btn").addEventListener("click", async ()
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ filename: name })
                         });
-                        if (!r.ok) throw new Error("Failed");
+                        if (!r.ok) {
+                            const error = await r.json();
+                            throw new Error(error?.error ?? 'Unknown Error');
+                        }
                         setStatus("Story loaded!");
                         renderMessages(await fetchMessages()); // immediately update title/turn while waiting for first poll
                         startPolling();
                         await pollAll();
                         setTimeout(() => closeModal("modal-stories"), 800);
-                    } catch (e) { setStatus("Error loading story."); }
+                    } catch (e) { setStatus(e.toString()); }
                 });
                 list.appendChild(li);
             });
@@ -708,12 +715,15 @@ document.getElementById("inventory-save-btn").addEventListener("click", async ()
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ template: name })
                         });
-                        if (!r.ok) throw new Error("Failed");
+                        if (!r.ok) {
+                            const error = await r.json();
+                            throw new Error(error?.error ?? 'Unknown Error');
+                        }
                         setStatus("Story created!");
                         startPolling();
                         await pollAll();
                         setTimeout(() => closeModal("modal-stories"), 800);
-                    } catch (e) { setStatus("Error creating story."); }
+                    } catch (e) { setStatus(e.toString()); }
                 });
                 list.appendChild(li);
             });

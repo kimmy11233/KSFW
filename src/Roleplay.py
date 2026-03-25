@@ -62,7 +62,17 @@ class Roleplay():
 
 
         # ── Connectors ────────────────────────────────────────────────────────
-        deep = DeepSeekAPIConnector()
+
+        openrouter_api_key: str | None = os.getenv('OPENROUTER_API_KEY')
+        deepseek_api_key: str | None = os.getenv('DEEPSEEK_API_KEY')
+        if openrouter_api_key and deepseek_api_key:
+            raise ValueError('Both OPENROUTER_API_KEY and DEEPSEEK_API_KEY defined, please chose oneeeeeee!!!')
+        elif openrouter_api_key:
+            deep = OpenRouterAPIConnector(openrouter_api_key)
+        elif deepseek_api_key:
+            deep = DeepSeekAPIConnector(deepseek_api_key)
+        else:
+            raise ValueError('Please define DEEPSEEK_API_KEY in the .env file')
 
         # ── Agents ────────────────────────────────────────────────────────────
         writer_agent                = TextAgent(WRITER_ID,            "Writer Agent",          "", deep)
@@ -558,7 +568,7 @@ class Roleplay():
         Yields nothing if no violations found.
         self._last_fix_output holds the fully corrected text for story commit.
         """
-        self._last_fix_output = None
+        self._last_fix_output: str | None = None
 
         if not self._any_violation(check_restraint, check_world, check_character, check_memory):
             print("[Fixer] All clear — no fix needed")
@@ -686,14 +696,12 @@ class Roleplay():
         # Each yielded line is newline-delimited JSON.
         # {"op": "diff_start"} signals the client to switch to diff mode.
         # Subsequent ops update the message in place, back-to-front.
-        fix_applied = False
         async for event_line in self._apply_fix_if_needed(
             writer_output, check_restraint, check_world, check_character, check_memory
         ):
-            fix_applied = True
             yield event_line
 
-        final_output = self._last_fix_output if fix_applied else writer_output
+        final_output = self._last_fix_output if self._last_fix_output is not None else writer_output
 
         # ── 4. Commit to story ─────────────────────────────────────────────────
         self.STORY.messages.append(Message(self.AGENTS[WRITER_ID].name, final_output))

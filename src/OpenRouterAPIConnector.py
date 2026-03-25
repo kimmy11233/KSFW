@@ -3,23 +3,21 @@ import json
 import requests
 import httpx
 from dotenv import load_dotenv
-from src.IConnectors import ILLMConnector, IImageConnector
+from src.IConnectors import ILLMConnector
 load_dotenv()
 
 
 DONE_REASONS = ("stop", "length", "end_turn", "tool_calls", "content_filter")
 class OpenRouterAPIConnector(ILLMConnector):
 
-    def __init__(self, api_key=None):
-        self.api_key = api_key or os.getenv("OPEN_ROUTER_API_KEY")
+    def __init__(self, api_key: str):
+        self.api_key = api_key
         self.OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
-        if not self.api_key:
-            raise ValueError("OpenRouter API key is required. Please set it in the .env file or pass it as an argument.")
 
     def get_max_context_length(self) -> int:
         return 64000  # As long as we don't change the underlying model, it's still deepseek
 
-    async def chat(self, system_prompt, user_prompt, temperature=0.7):
+    async def chat(self, system_prompt: str, user_prompt: str, temperature: float = 0.7) -> tuple[str, dict]:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
@@ -45,7 +43,7 @@ class OpenRouterAPIConnector(ILLMConnector):
         usage = self._format_usage(raw_usage)
         return content, usage
 
-    async def stream(self, system_prompt, user_prompt, temperature=0.7):
+    async def stream(self, system_prompt: str, user_prompt: str, temperature: float = 0.7):
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"

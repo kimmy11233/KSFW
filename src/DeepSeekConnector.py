@@ -3,7 +3,6 @@ import json
 import httpx
 import logging
 import requests
-import asyncio
 from dotenv import load_dotenv
 from src.IConnectors import ILLMConnector
 load_dotenv()
@@ -17,12 +16,10 @@ DEEPSEEK_CONTEXT_LENGTHS = {
 }
 
 class DeepSeekAPIConnector(ILLMConnector):
-    def __init__(self, api_key=None, model="deepseek-chat"):
-        self.api_key = api_key or os.getenv("DEEPSEEK_API_KEY")
+    def __init__(self, api_key: str, model="deepseek-chat"):
+        self.api_key = api_key
         self.model = model
         self.DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
-        if not self.api_key:
-            raise ValueError("DeepSeek API key is required. Please set it in the .env file or pass it as an argument.")
 
     def get_max_context_length(self) -> int:
         """Return the max context window in tokens for the current model."""
@@ -34,7 +31,7 @@ class DeepSeekAPIConnector(ILLMConnector):
             "Content-Type": "application/json"
         }
 
-    def _payload(self, system_prompt, user_prompt, temperature, stream=False):
+    def _payload(self, system_prompt: str, user_prompt: str, temperature: float, stream: bool = False):
         return {
             "model": self.model,
             "messages": [
@@ -46,7 +43,7 @@ class DeepSeekAPIConnector(ILLMConnector):
             "stream_options": {"include_usage": True} if stream else None
         }
 
-    async def chat(self, system_prompt, user_prompt, temperature=0.7) -> tuple[str, dict]:
+    async def chat(self, system_prompt: str, user_prompt: str, temperature: float = 0.7) -> tuple[str, dict]:
         """
         Returns (content, usage) where usage is:
           {"prompt_tokens": int, "completion_tokens": int, "total_tokens": int, "context_pct": float}
@@ -63,7 +60,7 @@ class DeepSeekAPIConnector(ILLMConnector):
         usage = self._format_usage(raw_usage)
         return content, usage
 
-    async def stream(self, system_prompt, user_prompt, temperature=0.7):
+    async def stream(self, system_prompt: str, user_prompt: str, temperature: float = 0.7):
         """
         Yields str chunks during streaming, then yields a final dict with usage info:
           {"prompt_tokens": int, "completion_tokens": int, "total_tokens": int, "context_pct": float}

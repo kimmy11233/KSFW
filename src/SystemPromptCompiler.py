@@ -9,7 +9,7 @@ class SystemPromptCompiler:
 
     def __init__(self, ):
         self.data_registry: dict[str, str] = {}
-        self.image_prompt_config: dict[str, str | dict] = {}
+        self.image_prompt_config: dict[str, str] = {}
 
     def import_system_prompt(self, path: str):
         # Add all markdown files in the folder to the data registry

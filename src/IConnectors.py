@@ -1,13 +1,15 @@
 from abc import ABC, abstractmethod
+from typing import AsyncGenerator
 
 class ILLMConnector(ABC):
+
     @abstractmethod
-    async def chat(self, system_prompt, user_prompt, temperature):
+    async def chat(self, system_prompt: str, user_prompt: str, temperature: float) -> tuple[str, dict]:
         pass
 
     @abstractmethod
-    async def stream(self, system_prompt, user_prompt, temperature):
-        pass
+    async def stream(self, system_prompt: str, user_prompt: str, temperature: float) -> AsyncGenerator[str | dict | None, None]:
+        yield None
 
     @abstractmethod
     def get_max_context_length(self) -> int:
@@ -29,5 +31,5 @@ class ILLMConnector(ABC):
 
 class IImageConnector(ABC):
     @abstractmethod
-    async def txt2img(self, prompt, negative_prompt, steps, path):
+    async def txt2img(self, prompt: str, negative_prompt: str, steps: int, path: str) -> str:
         pass

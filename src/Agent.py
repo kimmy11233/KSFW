@@ -1,6 +1,7 @@
-from abc import ABC, abstractmethod
-from enum import Enum
 import os
+import asyncio
+from abc import ABC
+from enum import Enum
 from src.IConnectors import ILLMConnector, IImageConnector
 from datetime import datetime
 from fastapi.concurrency import run_in_threadpool
@@ -67,9 +68,8 @@ class TextAgent(Agent):
         self.set_status(AgentStatus.BUSY)
         def blocking_generate():
             self.last_prompt = prompt
-            import asyncio
+            loop = asyncio.new_event_loop()
             try:
-                loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 result = loop.run_until_complete(self.connector.chat(
                     system_prompt=self.system_prompt,
@@ -140,10 +140,9 @@ class ImageAgent(Agent):
         from fastapi.concurrency import run_in_threadpool
         self.set_status(AgentStatus.BUSY)
         def blocking_generate():
+            loop = asyncio.new_event_loop()
             try:
                 full_prompt = f"{prompt}, {self.style}, {self.positive_keywords}"
-                import asyncio
-                loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 loop.run_until_complete(self.connector.txt2img(full_prompt, self.negative_keywords, steps, path))
                 return path

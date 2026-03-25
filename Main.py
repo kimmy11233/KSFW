@@ -9,11 +9,9 @@ import webbrowser, threading
 import logging
 import uvicorn
 import os
-from datetime import datetime
 from dotenv import load_dotenv
 load_dotenv()
 
-global IMAGE_PATH
 IMAGE_PATH = "./tmp/output.png" if os.path.exists("./tmp/output.png") else ""
 
 SELECTED_STORY_DIRECTORY = "./Story Templates/MOB"
@@ -21,9 +19,7 @@ LOAD_PATH = None
 SAVED_STORIES_DIRECTORY = "./saves"
 TEMPLATES_DIRECTORY = "./Story Templates"
 
-global ROLEPLAY_SYSTEM
-ROLEPLAY_SYSTEM = None
-
+ROLEPLAY_SYSTEM: Roleplay | None = None
 
 
 # Ensure log directory exists
@@ -93,6 +89,7 @@ async def submit_prompt(req: Request):
         return JSONResponse({"error": "No prompt provided"}, status_code=400)
 
     async def event_stream():
+        assert ROLEPLAY_SYSTEM is not None
         async for chunk in ROLEPLAY_SYSTEM.stream_response(prompt):
             yield chunk.encode("utf-8")
 
@@ -103,6 +100,7 @@ async def submit_prompt(req: Request):
 async def overwrite_inventory(req: Request):
     data = await req.json()
     new_inventory = data.get("inventory", "")
+    assert ROLEPLAY_SYSTEM is not None
     ROLEPLAY_SYSTEM.STORY.inventory = new_inventory
     ROLEPLAY_SYSTEM.STORY.save(ROLEPLAY_SYSTEM.load_path)
     return JSONResponse({"status": "success", "new_inventory": ROLEPLAY_SYSTEM.STORY.inventory})
@@ -112,6 +110,7 @@ async def overwrite_inventory(req: Request):
 async def overwrite_memory(req: Request):
     data = await req.json()
     new_memory = data.get("memory", "")
+    assert ROLEPLAY_SYSTEM is not None
     ROLEPLAY_SYSTEM.STORY.memory = new_memory
     ROLEPLAY_SYSTEM.STORY.save(ROLEPLAY_SYSTEM.load_path)
     return JSONResponse({"status": "success", "new_memory": ROLEPLAY_SYSTEM.STORY.memory})
@@ -172,7 +171,7 @@ async def create_from_template(req: Request):
     if not os.path.isdir(template_path):
         return JSONResponse({"error": "Template not found"}, status_code=404)
     try:
-        ROLEPLAY_SYSTEM = Roleplay(template_path, SAVED_STORIES_DIRECTORY)
+        ROLEPLAY_SYSTEM = Roleplay(template_path, SAVED_STORIES_DIRECTORY, None)
         return JSONResponse({"status": "success", "template": template})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
