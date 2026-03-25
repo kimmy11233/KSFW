@@ -20,7 +20,10 @@
             <div id="messages"></div>
             <form id="prompt-form">
                 <textarea id="prompt-input" placeholder="Enter your message... (shift + enter for newline)" autocomplete="off"></textarea>
-                <button type="submit" id="prompt-send">Send</button>
+                <div id="prompt-btn-stack">
+                    <button type="submit" id="prompt-send">Send</button>
+                    <button type="button" id="prompt-restore" title="Restore from backup">↩</button>
+                </div>
             </form>
         </div>
         <div id="side-panel">
@@ -121,6 +124,7 @@
             </div>
         </div>
     </div>
+    <div id="toast" class="toast toast-hidden"></div>
     <script src="app.js"></script>
 </body>
 </html>

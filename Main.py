@@ -104,7 +104,7 @@ async def overwrite_inventory(req: Request):
     new_inventory = data.get("inventory", "")
     assert ROLEPLAY_SYSTEM is not None
     ROLEPLAY_SYSTEM.STORY.inventory = new_inventory
-    ROLEPLAY_SYSTEM.STORY.save(ROLEPLAY_SYSTEM.load_path)
+    ROLEPLAY_SYSTEM.STORY.save()
     return JSONResponse({"status": "success", "new_inventory": ROLEPLAY_SYSTEM.STORY.inventory})
 
 
@@ -132,7 +132,7 @@ async def overwrite_memory(req: Request):
         ROLEPLAY_SYSTEM.STORY.memory.overwrite_rules(new_memory)
     elif memory_sector == "characters":
         ROLEPLAY_SYSTEM.STORY.memory.overwrite_characters(new_memory)
-    ROLEPLAY_SYSTEM.STORY.save(ROLEPLAY_SYSTEM.load_path)
+    ROLEPLAY_SYSTEM.STORY.save()
     return JSONResponse({"status": "success", "new_memory": ROLEPLAY_SYSTEM.STORY.memory.to_dict()})
 
 @app.get("/api/get_saved_stories")
@@ -199,6 +199,22 @@ async def create_from_template(req: Request):
     try:
         ROLEPLAY_SYSTEM = Roleplay(Story(template_path, SAVED_STORIES_DIRECTORY)) # Create a story from just a template
         return JSONResponse({"status": "success", "template": template})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+    
+@app.post("/api/restore_from_backup")
+async def restore_from_backup(req: Request):
+    global ROLEPLAY_SYSTEM
+    if ROLEPLAY_SYSTEM is None:
+        return JSONResponse({"error": "No story loaded"}, status_code=400)
+
+    try:
+        restored_story = ROLEPLAY_SYSTEM.STORY.restore_from_backup()
+        if restored_story is None:
+            return JSONResponse({"error": "No backups found"}, status_code=404)
+        ROLEPLAY_SYSTEM = Roleplay(restored_story) # Create a new roleplay system with the restored story
+        return JSONResponse({"status": "success"})
+    
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 

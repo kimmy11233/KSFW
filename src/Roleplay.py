@@ -627,7 +627,6 @@ class Roleplay():
         for agent in self.AGENTS.values():
             agent.write_last_response_to_file()
 
-        self.STORY.save()
         print("[Background] State saved")
 
     # ══════════════════════════════════════════════════════════════════════════

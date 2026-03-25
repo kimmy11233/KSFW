@@ -9,6 +9,7 @@ const storyImage = document.getElementById("story-image");
 const promptForm = document.getElementById("prompt-form");
 const promptInput = document.getElementById("prompt-input");
 const promptSend = document.getElementById("prompt-send");
+const promptRestore = document.getElementById("prompt-restore");
 const storyTitleDiv = document.getElementById("story-title");
 const turnValueSpan = document.getElementById("turn-value");
 const plannerThinking = document.getElementById("planner-thinking");
@@ -186,6 +187,9 @@ function updatePromptSendState(agentStatus) {
         promptSend.disabled = disable;
         promptSend.style.opacity = disable ? 0.5 : 1;
     }
+    if (typeof promptRestore !== 'undefined' && promptRestore) {
+        promptRestore.disabled = disable;
+    }
 }
 
 
@@ -230,12 +234,14 @@ function startPolling() {
     promptSend.disabled = false;
     promptSend.style.opacity = 1;
     promptInput.disabled = false;
+    promptRestore.disabled = false;
 }
 
 // Lock prompt form until a story is ready
 promptSend.disabled = true;
 promptSend.style.opacity = 0.5;
 promptInput.disabled = true;
+promptRestore.disabled = true;
 
 // Open the Manage Stories modal immediately on load
 window.addEventListener("DOMContentLoaded", () => {
@@ -395,6 +401,52 @@ function closeModal(modalId) {
     const el = document.getElementById(modalId);
     if (el) { el.setAttribute("aria-hidden", "true"); el.classList.remove("open"); }
 }
+
+// --- Toast ---
+let toastTimer = null;
+function showToast(msg, durationMs = 3000) {
+    const toast = document.getElementById("toast");
+    toast.textContent = msg;
+    toast.classList.remove("toast-hidden");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.add("toast-hidden"), durationMs);
+}
+
+// --- Restore from backup ---
+promptRestore.addEventListener("click", async () => {
+    if (promptRestore.disabled) return;
+
+    promptRestore.disabled = true;
+    promptSend.disabled = true;
+
+    try {
+        const res = await fetch(`${API_BASE}/restore_from_backup`, { method: "POST" });
+
+        if (res.status === 404) {
+            showToast("No backups found.");
+            return;
+        }
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            showToast(`Restore failed: ${data.error ?? res.statusText}`);
+            return;
+        }
+
+        // Success — re-render messages and scroll to bottom
+        const data = await fetchMessages();
+        renderMessages(data);
+        requestAnimationFrame(() => {
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+        await pollAll();
+
+    } catch (e) {
+        showToast(`Restore error: ${e.message}`);
+    } finally {
+        // Re-enable based on current agent state
+        updatePromptSendState(agentStatus);
+    }
+});
 
 document.querySelectorAll(".modal-overlay").forEach(overlay => {
     overlay.addEventListener("click", (e) => { if (e.target === overlay) closeModal(overlay.id); });

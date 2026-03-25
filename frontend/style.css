@@ -480,15 +480,80 @@ body {
 }
 
 #prompt-form button {
+    /* overridden by #prompt-btn-stack children below */
+}
+
+#prompt-btn-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
     margin-left: 12px;
-    padding: 10px 20px;
+    align-self: stretch;
+    width: 80px;
+}
+
+#prompt-send {
+    flex: 1;
+    padding: 0;
     background: var(--accent);
     color: #fff;
     border: none;
     border-radius: 4px;
     font-size: 1rem;
     cursor: pointer;
+    transition: opacity 0.2s;
+    width: 100%;
 }
+
+#prompt-restore {
+    flex: 1;
+    padding: 0;
+    background: var(--bar);
+    color: var(--foreground);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: opacity 0.2s, background 0.2s;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#prompt-send:hover:not(:disabled),
+#prompt-restore:hover:not(:disabled) { opacity: 0.85; }
+
+#prompt-send:disabled,
+#prompt-restore:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* --- Toast notification --- */
+.toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(0);
+    background: #3a2a3a;
+    color: var(--foreground);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 20px #0008;
+    z-index: 9999;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    white-space: nowrap;
+}
+
+.toast-hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(12px);
+}
+/* --- end Toast --- */
 
 #side-panel {
     flex: 1 1 0;
