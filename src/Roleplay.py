@@ -15,16 +15,20 @@ import datetime
 
 
 # ── Agent IDs ─────────────────────────────────────────────────────────────────
-WRITER_ID            = "writer_agent"
-PLANNER_ID           = "planner_agent"
-CHECKER_RESTRAINT_ID = "checker_restraint"
-CHECKER_WORLD_ID     = "checker_world"
-CHECKER_CHARACTER_ID = "checker_character"
-CHECKER_MEMORY_ID    = "checker_memory"
-FIXER_ID             = "fixer_agent"
-MEMORY_ID            = "memory_agent"
-INVENTORY_ID         = "inventory_agent"
-TIME_ID              = "time_estimation_agent"
+WRITER_ID                  = "writer_agent"
+PLANNER_ID                 = "planner_agent"
+CHECKER_RESTRAINT_ID       = "checker_restraint"
+CHECKER_WORLD_ID           = "checker_world"
+CHECKER_CHARACTER_ID       = "checker_character"
+CHECKER_MEMORY_ID          = "checker_memory"
+FIXER_ID                   = "fixer_agent"
+INVENTORY_ID               = "inventory_agent"
+TIME_ID                    = "time_estimation_agent"
+MEMORY_FACTS_ID            = "memory_facts_agent"
+MEMORY_EVENTS_ID           = "memory_events_agent"
+MEMORY_CHARACTER_ID        = "memory_character_agent"
+MEMORY_CURRENT_STATE_ID    = "memory_current_state_agent"
+MEMORY_RULES_ID            = "memory_rules_agent"
 
 
 async def _ensure(task: asyncio.Task):
@@ -61,16 +65,20 @@ class Roleplay():
         deep = DeepSeekAPIConnector()
 
         # ── Agents ────────────────────────────────────────────────────────────
-        writer_agent            = TextAgent(WRITER_ID,            "Writer Agent",          "", deep)
-        planner_agent           = TextAgent(PLANNER_ID,           "Planner Agent",         "", deep)
-        checker_restraint_agent = TextAgent(CHECKER_RESTRAINT_ID, "Restraint Checker",     "", deep)
-        checker_world_agent     = TextAgent(CHECKER_WORLD_ID,     "World Checker",         "", deep)
-        checker_character_agent = TextAgent(CHECKER_CHARACTER_ID, "Character Checker",     "", deep)
-        checker_memory_agent    = TextAgent(CHECKER_MEMORY_ID,    "Memory Checker",        "", deep)
-        fixer_agent             = TextAgent(FIXER_ID,             "Fixer Agent",           "", deep)
-        memory_agent            = TextAgent(MEMORY_ID,            "Memory Agent",          "", deep)
-        inventory_agent         = TextAgent(INVENTORY_ID,         "Inventory Agent",       "", deep)
-        time_estimation_agent   = TextAgent(TIME_ID,              "Time Estimation Agent", "", deep)
+        writer_agent                = TextAgent(WRITER_ID,            "Writer Agent",          "", deep)
+        planner_agent               = TextAgent(PLANNER_ID,           "Planner Agent",         "", deep)
+        checker_restraint_agent     = TextAgent(CHECKER_RESTRAINT_ID, "Restraint Checker",     "", deep)
+        checker_world_agent         = TextAgent(CHECKER_WORLD_ID,     "World Checker",         "", deep)
+        checker_character_agent     = TextAgent(CHECKER_CHARACTER_ID, "Character Checker",     "", deep)
+        checker_memory_agent        = TextAgent(CHECKER_MEMORY_ID,    "Memory Checker",        "", deep)
+        fixer_agent                 = TextAgent(FIXER_ID,             "Fixer Agent",           "", deep)
+        inventory_agent             = TextAgent(INVENTORY_ID,         "Inventory Agent",       "", deep)
+        time_estimation_agent       = TextAgent(TIME_ID,              "Time Estimation Agent", "", deep)
+        memory_facts_agent          = TextAgent(MEMORY_FACTS_ID,      "Facts Agent",    "", deep)
+        memory_events_agent         = TextAgent(MEMORY_EVENTS_ID,     "Events Agent",   "", deep)
+        memory_character_agent      = TextAgent(MEMORY_CHARACTER_ID,  "Character Agent", "", deep)
+        memory_current_state_agent  = TextAgent(MEMORY_CURRENT_STATE_ID, "Current State Agent", "", deep)
+        memory_rules_agent          = TextAgent(MEMORY_RULES_ID,      "Rules Agent",    "", deep)
 
         self.AGENTS = {
             WRITER_ID:            writer_agent,
@@ -78,26 +86,34 @@ class Roleplay():
             CHECKER_WORLD_ID:     checker_world_agent,
             CHECKER_CHARACTER_ID: checker_character_agent,
             CHECKER_MEMORY_ID:    checker_memory_agent,
-            MEMORY_ID:            memory_agent,
             INVENTORY_ID:         inventory_agent,
             TIME_ID:              time_estimation_agent,
             PLANNER_ID:           planner_agent,
             FIXER_ID:             fixer_agent,
+            MEMORY_FACTS_ID:      memory_facts_agent,
+            MEMORY_EVENTS_ID:     memory_events_agent,
+            MEMORY_CHARACTER_ID:  memory_character_agent,
+            MEMORY_CURRENT_STATE_ID: memory_current_state_agent,
+            MEMORY_RULES_ID:      memory_rules_agent,
         }
 
         # ── System prompt compilation ──────────────────────────────────────────
         compiler = SystemPromptCompiler()
         compiler.import_system_prompt(self.STORY.story_template_path)
-        compiler.compile_system_prompt(writer_agent,            "Writer Agent")
-        compiler.compile_system_prompt(planner_agent,           "Planner Agent")
-        compiler.compile_system_prompt(checker_restraint_agent, "Restraint Checker")
-        compiler.compile_system_prompt(checker_world_agent,     "World Checker")
-        compiler.compile_system_prompt(checker_character_agent, "Character Checker")
-        compiler.compile_system_prompt(checker_memory_agent,    "Memory Checker")
-        compiler.compile_system_prompt(fixer_agent,             "Fixer Agent")
-        compiler.compile_system_prompt(memory_agent,            "Memory Agent")
-        compiler.compile_system_prompt(inventory_agent,         "Inventory Manager")
-        compiler.compile_system_prompt(time_estimation_agent,   "Time Estimator")
+        compiler.compile_system_prompt(writer_agent,               "Writer Agent")
+        compiler.compile_system_prompt(planner_agent,              "Planner Agent")
+        compiler.compile_system_prompt(checker_restraint_agent,    "Restraint Checker")
+        compiler.compile_system_prompt(checker_world_agent,        "World Checker")
+        compiler.compile_system_prompt(checker_character_agent,    "Character Checker")
+        compiler.compile_system_prompt(checker_memory_agent,       "Memory Checker")
+        compiler.compile_system_prompt(fixer_agent,                "Fixer Agent")
+        compiler.compile_system_prompt(inventory_agent,            "Inventory Manager")
+        compiler.compile_system_prompt(time_estimation_agent,      "Time Estimator")
+        compiler.compile_system_prompt(memory_facts_agent,         "Facts Agent")
+        compiler.compile_system_prompt(memory_events_agent,        "Events Agent")
+        compiler.compile_system_prompt(memory_character_agent,     "Character Agent")
+        compiler.compile_system_prompt(memory_current_state_agent, "Current State Agent")
+        compiler.compile_system_prompt(memory_rules_agent,         "Rules Agent")
 
         # Write compiled prompts to ./tmp for debugging
         os.makedirs("./tmp", exist_ok=True)
@@ -360,19 +376,111 @@ class Roleplay():
             f"## Recent Story\n{past_messages}\n"
         )
         return await self.AGENTS[PLANNER_ID].generate_text_in_background(hydrated, temperature=0.7)
-
-    async def _call_memory_update(self, new_information: str) -> str:
-        """Memory agent. Returns updated memory string."""
-        amnt = max(self.COMPRESSION_TURN * 2, 20)
-        recent = self.STORY.messages[-amnt:]
-        messages_text = "\n".join(f"{m.agent_name}: {m.content}" for m in recent)
-        return await self.AGENTS[MEMORY_ID].generate_text_in_background(
-            f"Current memory:\n{self.STORY.memory}\n\n"
-            f"Past messages:\n{messages_text}\n\n"
-            f"New information:\n{new_information}\n\n"
-            f"Update the memory with the new information, keeping it concise and relevant.",
-            temperature=0.5,
+    
+    
+    async def _call_memory_events(self, writer_output: str) -> list[str]:
+        """
+        Events agent — append only.
+        Returns a list of new event strings to extend self.STORY.memory.events.
+        Returns an empty list if nothing worth recording happened.
+        """
+        result = await self.AGENTS[MEMORY_EVENTS_ID].generate_text_in_background(
+            f"[WRITER OUTPUT]\n{writer_output}",
+            temperature=0.3,
         )
+        result = result.strip()
+        if not result or result.upper() == "NO_EVENTS":
+            return []
+        # Parse "- <event>" lines into plain strings
+        events = []
+        for line in result.splitlines():
+            line = line.strip().lstrip("-").strip()
+            if line:
+                events.append(line)
+        return events
+ 
+    async def _call_memory_facts(self, writer_output: str) -> list[str]:
+        """
+        Facts agent — append only.
+        Returns a list of new fact strings to extend self.STORY.memory.facts.
+        Returns an empty list if no new facts were established.
+        """
+        result = await self.AGENTS[MEMORY_FACTS_ID].generate_text_in_background(
+            f"[WRITER OUTPUT]\n{writer_output}",
+            temperature=0.1,
+        )
+        result = result.strip()
+        if not result or result.upper() == "NO_FACTS":
+            return []
+        facts = []
+        for line in result.splitlines():
+            line = line.strip().lstrip("-").strip()
+            if line:
+                facts.append(line)
+        return facts
+ 
+    async def _call_memory_characters(self, writer_output: str) -> str:
+        """
+        Characters agent — update in place.
+        Returns the full updated [CHARACTERS] block as a string.
+        """
+        return await self.AGENTS[MEMORY_CHARACTER_ID].generate_text_in_background(
+            f"[CHARACTERS]\n{self.STORY.memory.characters_raw}\n\n"
+            f"[WRITER OUTPUT]\n{writer_output}",
+            temperature=0.3,
+        )
+ 
+    async def _call_memory_current_state(self, writer_output: str) -> str:
+        """
+        Current state agent — full rewrite each turn.
+        Returns the updated [CURRENT STATE] block as a string.
+        """
+        return await self.AGENTS[MEMORY_CURRENT_STATE_ID].generate_text_in_background(
+            f"[CURRENT STATE]\n{self.STORY.memory.current_state}\n\n"
+            f"[WRITER OUTPUT]\n{writer_output}",
+            temperature=0.3,
+        )
+ 
+    async def _call_memory_rules(self, writer_output: str) -> str:
+        """
+        Rules & routines agent — full rewrite each turn.
+        Returns the updated [RULES & ROUTINES] block as a string.
+        """
+        return await self.AGENTS[MEMORY_RULES_ID].generate_text_in_background(
+            f"[RULES & ROUTINES]\n{self.STORY.memory.rules}\n\n"
+            f"[WRITER OUTPUT]\n{writer_output}",
+            temperature=0.1,
+        )
+ 
+    async def _call_memory_update(self, writer_output: str) -> None:
+        """
+        Orchestrates all five memory agents concurrently.
+        Current state runs every turn.
+        Events, facts, characters, and rules run every turn but are cheap
+        (events/facts return NO_EVENTS/NO_FACTS most turns).
+        Writes results directly back to self.STORY.memory.
+        """
+        current_state, events, facts, characters, rules = await asyncio.gather(
+            self._call_memory_current_state(writer_output),
+            self._call_memory_events(writer_output),
+            self._call_memory_facts(writer_output),
+            self._call_memory_characters(writer_output),
+            self._call_memory_rules(writer_output),
+        )
+ 
+        self.STORY.memory.current_state   = current_state
+        self.STORY.memory.rules           = rules
+        self.STORY.memory.characters_raw  = characters
+ 
+        if events:
+            self.STORY.memory.events.extend(events)
+            print(f"[Memory] {len(events)} new event(s) appended")
+ 
+        if facts:
+            self.STORY.memory.facts.extend(facts)
+            print(f"[Memory] {len(facts)} new fact(s) appended")
+ 
+        print("[Memory] All sections updated")
 
     async def _call_inventory_update(self, writer_output: str) -> str:
         """Inventory agent. Returns updated inventory string."""
@@ -507,35 +615,24 @@ class Roleplay():
         print("[Planner] Note cached for next turn")
 
     async def _update_background_data(self, final_output: str):
-        """
-        Fire-and-forget background task that runs after each turn:
-        - Updates memory (compression turns only), inventory, and time in parallel
-        - Saves story state to disk
-        - Pre-warms the planner note for the turn after next
-        """
-        if self.STORY.turn_number % self.COMPRESSION_TURN == 0:
-            memory_coro = self._call_memory_update(final_output)
-        else:
-            async def _passthrough(): return self.STORY.memory
-            memory_coro = _passthrough()
-
         print("[Background] Updating state")
-        memory, inventory, time_est = await asyncio.gather(
-            memory_coro,
-            self._call_inventory_update(final_output),
-            self._call_time_update(final_output),
+
+        memory_task   = asyncio.create_task(self._call_memory_update(final_output))
+        inventory_task = asyncio.create_task(self._call_inventory_update(final_output))
+        time_task     = asyncio.create_task(self._call_time_update(final_output))
+
+        _, inventory, time_est = await asyncio.gather(
+            memory_task, inventory_task, time_task
         )
+
+        self.STORY.inventory     = inventory
+        self.STORY.last_time_est = time_est
 
         for agent in self.AGENTS.values():
             agent.write_last_response_to_file()
 
-        self.STORY.memory        = memory
-        self.STORY.inventory     = inventory
-        self.STORY.last_time_est = time_est
-
+        self.STORY.save(self.load_path)
         print("[Background] State saved")
-        # Planner pre-warm is handled by _cache_planner_note running in parallel
-
 
     # ══════════════════════════════════════════════════════════════════════════
     # PUBLIC API

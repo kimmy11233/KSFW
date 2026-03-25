@@ -1,4 +1,5 @@
 import json
+from src.Memory import Memory
 
 class Story():
     def __init__(self, directory: str):
@@ -9,7 +10,7 @@ class Story():
 
         self.title = story_data.get("title", "Untitled Story")
         self.messages: list[Message] = []
-        self.memory = ""
+        self.memory = Memory()
         self.turn_number = 0
         self.message_cutoff_index = 0
         self.last_time_est = 'STORY START, no time has passed yet'
@@ -28,7 +29,7 @@ class Story():
             "title": self.title,
             "story_template": self.story_template_path,
             "messages": [m.to_dict() for m in self.messages],
-            "memory": self.memory,
+            "memory": self.memory.to_dict(),
             "turn_number": self.turn_number,
             "last_time_est": self.last_time_est,
             "inventory": self.inventory,
@@ -43,7 +44,8 @@ class Story():
         story = cls.__new__(cls)
         story.title = data.get("title", "Untitled Story")
         story.story_template_path = data.get("story_template", "")
-        story.memory = data.get("memory", "")
+        story.memory = Memory()
+        story.memory.from_dict(data.get("memory", {}))
         story.turn_number = data.get("turn_number", 0)
         story.last_time_est = data.get("last_time_est", 'STORY START')
         story.inventory = data.get("inventory", "")

@@ -463,63 +463,150 @@ document.getElementById("inventory-save-btn").addEventListener("click", async ()
 });
 
 // --- Memory modal ---
-function setMemoryViewMode(content) {
-    document.getElementById("memory-display").textContent = content || "(empty)";
-    document.getElementById("memory-display").style.display = "";
-    document.getElementById("memory-edit").style.display = "none";
-    document.getElementById("memory-edit-btn").style.display = "";
-    document.getElementById("memory-save-btn").style.display = "none";
-    document.getElementById("memory-cancel-btn").style.display = "none";
-}
-function setMemoryEditMode(content) {
-    document.getElementById("memory-display").style.display = "none";
-    const ta = document.getElementById("memory-edit");
-    ta.value = content || "";
-    ta.style.display = "";
-    document.getElementById("memory-edit-btn").style.display = "none";
-    document.getElementById("memory-save-btn").style.display = "";
-    document.getElementById("memory-cancel-btn").style.display = "";
-    ta.focus();
-}
+(function () {
+    // Section definitions — order controls tab order
+    const SECTIONS = [
+        { key: "current_state", label: "Current State", type: "text" },
+        { key: "characters_raw", label: "Characters",   type: "text" },
+        { key: "rules",         label: "Rules",         type: "text" },
+        { key: "facts",         label: "Facts",         type: "list" },
+        { key: "events",        label: "Events",        type: "list" },
+    ];
 
-document.getElementById("btn-memory").addEventListener("click", async () => {
-    if (isInputLocked()) return;
-    openModal("modal-memory");
-    const data = await fetchMessages();
-    setMemoryViewMode(data.memory || "");
-});
-document.getElementById("memory-edit-btn").addEventListener("click", () => {
-    if (isInputLocked()) return;
-    const current = document.getElementById("memory-display").textContent;
-    setMemoryEditMode(current === "(empty)" ? "" : current);
-});
-document.getElementById("memory-cancel-btn").addEventListener("click", async () => {
-    const data = await fetchMessages();
-    setMemoryViewMode(data.memory || "");
-});
-document.getElementById("memory-save-btn").addEventListener("click", async () => {
-    if (isInputLocked()) return;
-    const newVal = document.getElementById("memory-edit").value;
-    const saveBtn = document.getElementById("memory-save-btn");
-    const footer = saveBtn.closest(".modal-footer");
-    let indicator = footer.querySelector(".modal-saving");
-    if (!indicator) {
-        indicator = document.createElement("span");
-        indicator.className = "modal-saving";
-        indicator.textContent = "Saving\u2026";
-        footer.insertBefore(indicator, footer.firstChild);
-    }
-    saveBtn.disabled = true;
-    try {
-        await fetch(`${API_BASE}/overwrite_memory`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ memory: newVal })
+    let memoryData = {};       // live copy of the memory object from the API
+    let activeSection = SECTIONS[0].key;
+    let editingSection = null; // key of section currently being edited, or null
+
+    // ── Build tab bar ──────────────────────────────────────────────────────
+    const tabBar = document.getElementById("memory-tab-bar");
+    const contentArea = document.getElementById("memory-content-area");
+    const editBtn   = document.getElementById("memory-edit-btn");
+    const saveBtn   = document.getElementById("memory-save-btn");
+    const cancelBtn = document.getElementById("memory-cancel-btn");
+
+    SECTIONS.forEach(sec => {
+        const btn = document.createElement("button");
+        btn.className = "memory-tab" + (sec.key === activeSection ? " active" : "");
+        btn.dataset.key = sec.key;
+        btn.textContent = sec.label;
+        btn.addEventListener("click", () => switchSection(sec.key));
+        tabBar.appendChild(btn);
+    });
+
+    // ── Section switching ──────────────────────────────────────────────────
+    function switchSection(key) {
+        if (editingSection) cancelEdit();
+        activeSection = key;
+        tabBar.querySelectorAll(".memory-tab").forEach(b => {
+            b.classList.toggle("active", b.dataset.key === key);
         });
-        setMemoryViewMode(newVal);
-    } catch (e) { console.error("Failed to save memory", e); }
-    finally { indicator.remove(); saveBtn.disabled = false; }
-});
+        renderView();
+    }
+
+    // ── Render helpers ─────────────────────────────────────────────────────
+    function getSectionValue(key) {
+        const sec = SECTIONS.find(s => s.key === key);
+        const val = memoryData[key];
+        if (sec.type === "list") {
+            return Array.isArray(val) && val.length ? val.join("\n") : "";
+        }
+        return val || "";
+    }
+
+    function renderView() {
+        contentArea.innerHTML = "";
+        const value = getSectionValue(activeSection);
+        const pre = document.createElement("pre");
+        pre.className = "modal-pre";
+        pre.id = "memory-section-display";
+        pre.textContent = value || "(empty)";
+        contentArea.appendChild(pre);
+
+        editBtn.style.display = "";
+        saveBtn.style.display = "none";
+        cancelBtn.style.display = "none";
+        editingSection = null;
+    }
+
+    function renderEdit() {
+        contentArea.innerHTML = "";
+        const value = getSectionValue(activeSection);
+        const ta = document.createElement("textarea");
+        ta.className = "modal-textarea";
+        ta.id = "memory-section-edit";
+        ta.value = value;
+        contentArea.appendChild(ta);
+        ta.focus();
+
+        editBtn.style.display = "none";
+        saveBtn.style.display = "";
+        cancelBtn.style.display = "";
+        editingSection = activeSection;
+    }
+
+    function cancelEdit() {
+        renderView();
+    }
+
+    // ── Button handlers ────────────────────────────────────────────────────
+    editBtn.addEventListener("click", () => {
+        if (isInputLocked()) return;
+        renderEdit();
+    });
+
+    cancelBtn.addEventListener("click", () => cancelEdit());
+
+    saveBtn.addEventListener("click", async () => {
+        if (isInputLocked()) return;
+        const ta = document.getElementById("memory-section-edit");
+        if (!ta) return;
+        const newVal = ta.value;
+
+        // Write back into memoryData
+        const sec = SECTIONS.find(s => s.key === editingSection);
+        if (sec.type === "list") {
+            memoryData[editingSection] = newVal.split("\n").map(l => l.trim()).filter(Boolean);
+        } else {
+            memoryData[editingSection] = newVal;
+        }
+
+        // Show saving indicator
+        const footer = saveBtn.closest(".modal-footer");
+        let indicator = footer.querySelector(".modal-saving");
+        if (!indicator) {
+            indicator = document.createElement("span");
+            indicator.className = "modal-saving";
+            indicator.textContent = "Saving\u2026";
+            footer.insertBefore(indicator, footer.firstChild);
+        }
+        saveBtn.disabled = true;
+
+        try {
+            await fetch(`${API_BASE}/overwrite_memory`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ memory: memoryData })
+            });
+            renderView();
+        } catch (e) {
+            console.error("Failed to save memory", e);
+        } finally {
+            indicator.remove();
+            saveBtn.disabled = false;
+        }
+    });
+
+    // ── Open modal ─────────────────────────────────────────────────────────
+    document.getElementById("btn-memory").addEventListener("click", async () => {
+        if (isInputLocked()) return;
+        openModal("modal-memory");
+        const data = await fetchMessages();
+        memoryData = (data && data.memory) ? { ...data.memory } : {};
+        switchSection(activeSection);
+    });
+
+})();
+// --- end Memory modal ---
 
 // --- end modal logic ---
 

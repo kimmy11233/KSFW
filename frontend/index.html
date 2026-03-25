@@ -65,19 +65,17 @@
 
             <!-- Memory Modal -->
             <div id="modal-memory" class="modal-overlay" aria-hidden="true">
-                <div class="modal-box">
+                <div class="modal-box modal-box--memory">
                     <div class="modal-header">
                         <span class="modal-title">Memory</span>
                         <button class="modal-close" data-modal="modal-memory">&times;</button>
                     </div>
-                    <div class="modal-body">
-                        <pre id="memory-display" class="modal-pre"></pre>
-                        <textarea id="memory-edit" class="modal-textarea" style="display:none;"></textarea>
-                    </div>
+                    <div class="memory-tab-bar" id="memory-tab-bar"></div>
+                    <div class="modal-body memory-body" id="memory-content-area"></div>
                     <div class="modal-footer">
                         <button class="modal-btn secondary" id="memory-edit-btn">Edit</button>
-                        <button class="modal-btn primary" id="memory-save-btn" style="display:none;">Save</button>
-                        <button class="modal-btn ghost" id="memory-cancel-btn" style="display:none;">Cancel</button>
+                        <button class="modal-btn primary"   id="memory-save-btn"   style="display:none;">Save</button>
+                        <button class="modal-btn ghost"     id="memory-cancel-btn" style="display:none;">Cancel</button>
                     </div>
                 </div>
             </div>
