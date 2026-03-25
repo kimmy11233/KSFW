@@ -20,3 +20,4 @@ X? When we force the user message up we should make room for the planning sprite
 X Refactor load/create pipleine with the roleplay and story object
 - Proper noun system that reads a chat determins the current proper nouns, which is referenced to actual objects. A generater generates the objects when a new thing comes. 
 X Backup system
+- The main system seems to be really rushing and not stopping when the play input is requested, perhaps another agent this one to prepare just a stop beat
