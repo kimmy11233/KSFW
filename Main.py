@@ -10,6 +10,8 @@ import logging
 import uvicorn
 import os
 from dotenv import load_dotenv
+
+from src.Story import Story
 load_dotenv()
 
 IMAGE_PATH = "./tmp/output.png" if os.path.exists("./tmp/output.png") else ""
@@ -153,13 +155,16 @@ async def load_story(req: Request):
     global ROLEPLAY_SYSTEM
     data = await req.json()
     filename = data.get("filename", "")
+
     if not filename:
         return JSONResponse({"error": "No filename provided"}, status_code=400)
     path = os.path.join(SAVED_STORIES_DIRECTORY, filename)
+
     if not os.path.exists(path):
         return JSONResponse({"error": "File not found"}, status_code=404)
-    try:
-        ROLEPLAY_SYSTEM = Roleplay(SELECTED_STORY_DIRECTORY, SAVED_STORIES_DIRECTORY, path)
+    
+    try:      
+        ROLEPLAY_SYSTEM = Roleplay(Story.load(path)) # Load the story from the selected file and create a new roleplay system with it
         return JSONResponse({"status": "success", "loaded": filename})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
@@ -183,13 +188,16 @@ async def create_from_template(req: Request):
     global ROLEPLAY_SYSTEM
     data = await req.json()
     template = data.get("template", "")
+
     if not template:
         return JSONResponse({"error": "No template provided"}, status_code=400)
     template_path = os.path.join(TEMPLATES_DIRECTORY, template)
+
     if not os.path.isdir(template_path):
         return JSONResponse({"error": "Template not found"}, status_code=404)
+    
     try:
-        ROLEPLAY_SYSTEM = Roleplay(template_path, SAVED_STORIES_DIRECTORY, None)
+        ROLEPLAY_SYSTEM = Roleplay(Story(template_path, SAVED_STORIES_DIRECTORY)) # Create a story from just a template
         return JSONResponse({"status": "success", "template": template})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)

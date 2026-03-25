@@ -41,25 +41,11 @@ async def _ensure(task: asyncio.Task):
 
 
 class Roleplay():
-    def __init__(self, selected_story_directory, saves_dir, load_path = None):
+    def __init__(self, story: Story):
 
-
-        # ── Story ──────────────────────────────────────────────────────────────
-        if load_path is not None and not os.path.exists(load_path):
-                raise FileNotFoundError(f"Load path {load_path} does not exist")
-        
-        if load_path is None:
-            self.STORY = Story(selected_story_directory)
-            self.load_path = os.path.join(saves_dir, f"{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}_{self.STORY.title}.json")
-        else:
-            self.STORY = Story(selected_story_directory)
-            self.STORY.load(load_path)
-            self.load_path = load_path
-
+        self.STORY: Story = story
         self.COMPRESSION_TURN = self.STORY.config.get("compression_turn", 20)
         self.IMAGE_GENERATION_ENABLED = False
-
-
 
         # ── Connectors ────────────────────────────────────────────────────────
 
@@ -158,7 +144,7 @@ class Roleplay():
             f"---\n"
             f"# Story So Far\n{past_messages}\n"
             f"---\n"
-            f"## Planner Note\n{self.STORY.base_plan or 'No planner note yet.'}\n"
+            f"## Planner Note\n{self.STORY.plan or 'No planner note yet.'}\n"
             f"---\n"
             f"## Player Input\n{prompt}\n"
         )
@@ -171,7 +157,7 @@ class Roleplay():
             f"---\n"
             f"# Story So Far\n{past_messages}\n"
             f"---\n"
-            f"## Planner Note\n{self.STORY.base_plan or 'No planner note yet.'}\n"
+            f"## Planner Note\n{self.STORY.plan or 'No planner note yet.'}\n"
             f"---\n"
             f"## Player Input\n{prompt}\n"
         )
@@ -621,7 +607,7 @@ class Roleplay():
         Run the planner against the just-completed turn and cache its note.
         Called in parallel with the checkers so it's ready before the next player input.
         """
-        self.STORY.base_plan = await self._call_planner(past_messages_with_output)
+        self.STORY.plan = await self._call_planner(past_messages_with_output)
         print("[Planner] Note cached for next turn")
 
     async def _update_background_data(self, final_output: str):
@@ -641,7 +627,7 @@ class Roleplay():
         for agent in self.AGENTS.values():
             agent.write_last_response_to_file()
 
-        self.STORY.save(self.load_path)
+        self.STORY.save()
         print("[Background] State saved")
 
     # ══════════════════════════════════════════════════════════════════════════
@@ -705,7 +691,7 @@ class Roleplay():
 
         # ── 4. Commit to story ─────────────────────────────────────────────────
         self.STORY.messages.append(Message(self.AGENTS[WRITER_ID].name, final_output))
-        self.STORY.save(self.load_path)
+        self.STORY.save()
 
         usage = self.AGENTS[WRITER_ID].last_usage
         if usage and usage.get("context_pct", 0) > 50:
