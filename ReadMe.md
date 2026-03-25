@@ -27,16 +27,13 @@
 - If you ever need to get back to the webpage and don't want to start it tries to open at http://localhost:8080/home
 
 ### Adding a story
-You are likely either adding one of my stories or writing your own. I will separately provide a blank template.
-You can edit anything you like but the world description and the player description and story are the key ones here. If starting from the template
-make sure you fill them both out, if starting from mine just fill out the player and try not to peek at the world. It will spoil things!
-The easiest way to make a story is provide a World description from my world and then give it claud and describe the new world you want and have it rewrite it. Then ask it for a first message and put that into storage.
+Copy the `__BLANK__` template and edit files. The default system prompts will be used unless overwritten.
 
 To be clear:
 Player Description: Needs to be edited
 World Description: Needs to be edited if you are starting from blank
 Story.json: Needs to be edited if you are starting from blank
-Everything else is edit at your own risk
+Everything copy the file from Default System prompts and into the template directory and it will be used instead of the default.
 
 ### Known bugs
 * Edits sometimes butcher whitespace. We love vibe code jank!
