@@ -22,13 +22,25 @@ class SystemPromptCompiler:
                     self.data_registry[key] = content
 
         print(f"Imported system prompts from '{path}':")
-        for key in self.data_registry.keys():
-            print(f"\t{key}")
 
         image_agent_json_path = os.path.join(path, "image_agent.json")
         if os.path.isfile(image_agent_json_path):
             with open(image_agent_json_path, 'r', encoding='utf-8') as json_file:
                 self.image_prompt_config = json.load(json_file)
+
+        default_path = "./Default System Prompts"
+        if os.path.isdir(default_path):
+            for filename in os.listdir(default_path):
+                if filename.endswith('.md'):
+                    key = os.path.splitext(filename)[0]
+                    # Only add if not already in data_registry
+                    if key not in self.data_registry:
+                        file_path = os.path.join(default_path, filename)
+                        with open(file_path, 'r', encoding='utf-8') as md_file:
+                            content = md_file.read()
+                            self.data_registry[key] = content
+            
+            print(f"Loaded default system prompts from '{default_path}'")
 
     def compile_system_prompt(self, agent: TextAgent | ImageAgent, system_prompt_lookup: str) -> None:
         if isinstance(agent, ImageAgent):
