@@ -15,3 +15,5 @@ X Images fuck up their aspect ratio
 - conditions in inventory never expires, update time prediction to give an actual time such that inventory can remove conditions over time.
 - Add a little grey errow in the bottom left to move you to the bottom of the story
 - The Inventory and Memory buttons should always be availible, but their edit buttons should be locked if the background tasks are working
+- Somewhere we lost the grey line above the user mesage
+- When we force the user message up we should make room for the planning sprite
