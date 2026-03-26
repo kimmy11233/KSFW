@@ -1,8 +1,10 @@
 import json
 from src.Memory import Memory
+from src.Nouns import Noun_Controller
 import os
 import datetime
 from typing import Optional
+
 
 BACKUP_DIRECTORY = './tmp/backups'
 os.makedirs(BACKUP_DIRECTORY, exist_ok=True)
@@ -23,6 +25,7 @@ class Story():
         self.title = config_file.get("title", "Untitled Story")
         self.messages: list[Message] = []
         self.memory = Memory()
+        self.nouns_controller = Noun_Controller()
         self.turn_number = 0
         self.message_cutoff_index = 0
         self.last_time_est = 'STORY START, no time has passed yet'
@@ -49,6 +52,7 @@ class Story():
             "title": self.title,
             "story_template": self.story_template_path,
             "memory": self.memory.to_dict(),
+            "noun_controller": self.nouns_controller.to_dict(),
             "turn_number": self.turn_number,
             "message_cutoff_index": self.message_cutoff_index,
             "last_time_est": self.last_time_est,
@@ -63,6 +67,7 @@ class Story():
 
         story.title = data.get("title", "Untitled Story")
         story.memory.from_dict(data.get("memory", {}))
+        story.nouns_controller = Noun_Controller.from_dict(data.get("noun_controller", {}))
         story.turn_number = data.get("turn_number", 0)
         story.message_cutoff_index = data.get("message_cutoff_index", 0)
         story.last_time_est = data.get("last_time_est", 'STORY START, no time has passed yet')

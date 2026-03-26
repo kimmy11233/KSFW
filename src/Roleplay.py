@@ -31,7 +31,9 @@ MEMORY_CURRENT_STATE_ID    = "memory_current_state_agent"
 MEMORY_RULES_ID            = "memory_rules_agent"
 STOP_POINT_AGENT           = "stop_point_agent"
 GAG_SPEECH_AGENT           = "gag_speech_agent"
-
+NOUNS_GENERATION_AGENT_ID      = "nouns_generation_agent"
+NOUNS_RETRIEVAL_AGENT_ID        = "nouns_retrieval_agent"
+NOUNS_UPDATE_FLAG_AGENT_ID      = "nouns_update_flag_agent"
 
 async def _ensure(task: asyncio.Task):
     """Await a task silently — used to let fire-and-forget tasks complete
@@ -79,6 +81,9 @@ class Roleplay():
         memory_rules_agent          = TextAgent(MEMORY_RULES_ID,      "Rules Agent",            "", deep)
         stop_point_agent            = TextAgent(STOP_POINT_AGENT,     "Stop Point Agent",        "", deep)
         gag_speech_agent            = TextAgent(GAG_SPEECH_AGENT,     "Gag Speech Agent",      "", deep)
+        nouns_generation_agent      = TextAgent(NOUNS_GENERATION_AGENT_ID, "NOUNS Generation Agent", "", deep)
+        nouns_retrieval_agent       = TextAgent(NOUNS_RETRIEVAL_AGENT_ID, "NOUNS Retrieval Agent", "", deep)
+        nouns_update_flag_agent     = TextAgent(NOUNS_UPDATE_FLAG_AGENT_ID, "NOUNS Update Flag Agent", "", deep)
 
         self.AGENTS = {
             WRITER_ID:            writer_agent,
@@ -97,6 +102,9 @@ class Roleplay():
             MEMORY_RULES_ID:      memory_rules_agent,
             STOP_POINT_AGENT:     stop_point_agent,
             GAG_SPEECH_AGENT:    gag_speech_agent,
+            NOUNS_GENERATION_AGENT_ID: nouns_generation_agent,
+            NOUNS_RETRIEVAL_AGENT_ID: nouns_retrieval_agent,
+            NOUNS_UPDATE_FLAG_AGENT_ID: nouns_update_flag_agent,
         }
 
         # ── System prompt compilation ──────────────────────────────────────────
@@ -118,6 +126,12 @@ class Roleplay():
         compiler.compile_system_prompt(memory_rules_agent,         "Rules Agent")
         compiler.compile_system_prompt(stop_point_agent,           "Stop Point Agent")
         compiler.compile_system_prompt(gag_speech_agent,           "Gag Speech Agent")
+        compiler.compile_system_prompt(nouns_generation_agent,     "NOUNS Generation Agent")
+        compiler.compile_system_prompt(nouns_retrieval_agent,      "NOUNS Retrieval Agent")
+        compiler.compile_system_prompt(nouns_update_flag_agent,    "NOUNS Update Flag Agent")
+
+        self.STORY.nouns_controller.assign_agents(nouns_generation_agent, nouns_retrieval_agent, nouns_update_flag_agent)
+        self.noun_block = None
 
         # Write compiled prompts to ./tmp for debugging
         os.makedirs("./tmp", exist_ok=True)
@@ -144,6 +158,7 @@ class Roleplay():
             f"## Persistent Facts\n{self.STORY.memory}\n"
             f"## Inventory\n{self.STORY.inventory}\n"
             f"## Time Since Last Turn\n{self.STORY.last_time_est}\n"
+            f"## Nouns\n{self.noun_block or 'None'}\n"
         )
 
     async def _call_writer(self, prompt: str, past_messages: str) -> str:
@@ -658,15 +673,13 @@ class Roleplay():
         )
 
         self.STORY.inventory = inventory
-
-        for agent in self.AGENTS.values():
-            agent.write_last_response_to_file()
-
         print("[Background] State saved")
 
     # ══════════════════════════════════════════════════════════════════════════
     # PUBLIC API
     # ══════════════════════════════════════════════════════════════════════════
+    async def seed_story(self):
+        await self.STORY.nouns_controller.seed_from_story_template(self.STORY.story_template_path)
 
     async def stream_response(self, prompt: str):
         """
@@ -684,13 +697,20 @@ class Roleplay():
 
         writer_output = ""
         # ── 1. User input agents───────────────────────────────────────────────────
-        stop_point_task = asyncio.create_task(self._call_get_stop_point(self.STORY.messages[-1], prompt))
+        stop_point_task = asyncio.create_task(self._call_get_stop_point(self.STORY.messages[-2:], prompt))
         gag_speech_task = asyncio.create_task(self._call_gag_speech(prompt))
+        get_nouns_task = asyncio.create_task(self.STORY.nouns_controller.get_injected_nouns(self.STORY.messages[-2:], self.STORY.plan))
 
-        await asyncio.gather(stop_point_task, gag_speech_task)
+        await asyncio.gather(stop_point_task, gag_speech_task, get_nouns_task)
         stop_point = stop_point_task.result()
         gag_speech = gag_speech_task.result()
         prompt = gag_speech
+        nouns, nouns_miss = get_nouns_task.result()
+
+        for noun in nouns_miss:
+            print(f"[NOUNS] Query miss for: {noun}")
+
+        self.noun_block = "\n".join(f"- {n}" for n in nouns) if nouns else "None"
 
         # ── 2. Stream writer ───────────────────────────────────────────────────
         try:
@@ -711,6 +731,7 @@ class Roleplay():
         background_task = asyncio.create_task(self._update_background_data(writer_output))
         checker_task    = asyncio.create_task(self._run_checkers(writer_output, past_messages))
         planner_task    = asyncio.create_task(self._cache_planner_note(past_with_output))
+        nouns_task      = asyncio.create_task(self.STORY.nouns_controller.update_nouns(writer_output))
 
         # Checkers must finish before we can decide whether to fix
         await checker_task
@@ -734,6 +755,10 @@ class Roleplay():
         # ── 5. Commit to story ─────────────────────────────────────────────────
         self.STORY.messages.append(Message(self.AGENTS[WRITER_ID].name, final_output))
         self.STORY.save()
+
+        # Write all agent responses to files for debugging
+        for agent in self.AGENTS.values():
+            agent.write_last_response_to_file()
 
         usage = self.AGENTS[WRITER_ID].last_usage
         if usage and usage.get("context_pct", 0) > 50:

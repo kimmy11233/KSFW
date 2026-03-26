@@ -1,9 +1,12 @@
 # !/usr/bin/env python3
 from src.Roleplay import Roleplay
+from src.Nouns import _noun_from_data
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+
+import traceback
 
 import webbrowser, threading
 import logging
@@ -137,6 +140,46 @@ async def overwrite_memory(req: Request):
     ROLEPLAY_SYSTEM.STORY.save()
     return JSONResponse({"status": "success", "new_memory": ROLEPLAY_SYSTEM.STORY.memory.to_dict()})
 
+
+@app.get("/api/get_nouns")
+def get_nouns():
+    if ROLEPLAY_SYSTEM is None:
+        return {"nouns": []}
+    return {
+        "characters": [char.to_dict() for char in ROLEPLAY_SYSTEM.STORY.nouns_controller.noun_repository.characters.values()],
+        "factions": [faction.to_dict() for faction in ROLEPLAY_SYSTEM.STORY.nouns_controller.noun_repository.factions.values()],
+        "locations": [location.to_dict() for location in ROLEPLAY_SYSTEM.STORY.nouns_controller.noun_repository.locations.values()],
+        "items": [item.to_dict() for item in ROLEPLAY_SYSTEM.STORY.nouns_controller.noun_repository.items.values()],
+    }
+
+@app.post("/api/overwrite_noun")
+async def overwrite_noun_endpoint(req: Request):
+    data = await req.json()
+    try:
+        noun = _noun_from_data(data)
+
+        if noun.noun.type not in ["character", "faction", "location", "item"]:
+            return JSONResponse({"error": "Invalid noun type"}, status_code=400)
+        if ROLEPLAY_SYSTEM is None:
+            return JSONResponse({"error": "No story loaded"}, status_code=400)
+        
+        if noun.noun.type == "character":
+            ROLEPLAY_SYSTEM.STORY.nouns_controller.noun_repository.characters[noun.noun.name] = noun
+        elif noun.noun.type == "faction":
+            ROLEPLAY_SYSTEM.STORY.nouns_controller.noun_repository.factions[noun.noun.name] = noun
+        elif noun.noun.type == "location":
+            ROLEPLAY_SYSTEM.STORY.nouns_controller.noun_repository.locations[noun.noun.name] = noun
+        elif noun.noun.type == "item":
+            ROLEPLAY_SYSTEM.STORY.nouns_controller.noun_repository.items[noun.noun.name] = noun
+        return JSONResponse({"status": "success"})
+    
+    except ValueError as e:
+        print(f"Error: {e}")
+        traceback.print_exc()
+        return JSONResponse({"error": str(e)}, status_code=400)
+
+
+
 @app.get("/api/get_saved_stories")
 def get_saved_stories():
     os.makedirs(SAVED_STORIES_DIRECTORY, exist_ok=True)
@@ -149,6 +192,8 @@ def get_saved_stories():
             os.path.join(SAVED_STORIES_DIRECTORY, f)), reverse=True)
         return {"stories": files}
     except Exception as e:
+        print(f"Error: {e}")
+        traceback.print_exc()
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
@@ -169,6 +214,8 @@ async def load_story(req: Request):
         ROLEPLAY_SYSTEM = Roleplay(Story.load(path)) # Load the story from the selected file and create a new roleplay system with it
         return JSONResponse({"status": "success", "loaded": filename})
     except Exception as e:
+        print(f"Error: {e}")
+        traceback.print_exc()
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
@@ -182,6 +229,8 @@ def get_templates():
         templates.sort()
         return {"templates": templates}
     except Exception as e:
+        print(f"Error: {e}")
+        traceback.print_exc()
         return JSONResponse({"error": str(e)}, status_code=500)
 
 @app.get("/api/get_agent_last_response")
@@ -197,10 +246,14 @@ async def get_agent_last_response(agent_id: str):
         return JSONResponse({"error": "No last response available"}, status_code=404)
 
     try:
+        if not os.path.exists(agent.last_response_file_path):
+            return JSONResponse({"error": "Last response file not found"}, status_code=404)
         with open(agent.last_response_file_path, 'r', encoding='utf-8') as f:
             last_response = f.read()
         return JSONResponse({"last_response": last_response})
     except Exception as e:
+        print(f"Error: {e}")
+        traceback.print_exc()
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
@@ -219,8 +272,11 @@ async def create_from_template(req: Request):
     
     try:
         ROLEPLAY_SYSTEM = Roleplay(Story(template_path, SAVED_STORIES_DIRECTORY)) # Create a story from just a template
+        await ROLEPLAY_SYSTEM.seed_story() # Seed the story's noun controller with the template data
         return JSONResponse({"status": "success", "template": template})
     except Exception as e:
+        print(f"Error: {e}")
+        traceback.print_exc()
         return JSONResponse({"error": str(e)}, status_code=500)
     
 @app.post("/api/restore_from_backup")
@@ -237,6 +293,8 @@ async def restore_from_backup(req: Request):
         return JSONResponse({"status": "success"})
     
     except Exception as e:
+        print(f"Error: {e}")
+        traceback.print_exc()
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
