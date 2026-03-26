@@ -171,7 +171,7 @@ function renderAgents(agents) {
             const pct = context_pct ?? 0;
             const timeStr = agent.last_response_time ? `${parseFloat(agent.last_response_time).toFixed(1)}s` : "";
             const tokStr = `${(total_tokens / 1000).toFixed(1)}k ${pct}%`;
-            metaSpan.textContent = [timeStr, tokStr].filter(Boolean).join(" � ");
+            metaSpan.textContent = [timeStr, tokStr].filter(Boolean).join(" | ");
         } else if (agent.last_response_time) {
             metaSpan.textContent = `${parseFloat(agent.last_response_time).toFixed(1)}s`;
         }
@@ -559,9 +559,7 @@ document.getElementById("inventory-save-btn").addEventListener("click", async ()
     // Section definitions — order controls tab order
     const SECTIONS = [
         { key: "current_state", label: "Current State", type: "text" },
-        { key: "characters_raw", label: "Characters",   type: "text" },
         { key: "rules",         label: "Rules",         type: "text" },
-        { key: "facts",         label: "Facts",         type: "list" },
         { key: "events",        label: "Events",        type: "list" },
     ];
 
@@ -714,6 +712,170 @@ document.getElementById("inventory-save-btn").addEventListener("click", async ()
 // --- end Memory modal ---
 
 // --- end modal logic ---
+
+// --- Nouns modal ---
+(function () {
+    const TABS = ["characters", "locations", "factions", "items"];
+    let activeTab = "characters";
+    let nounsData = {};
+    let activeNoun = null;
+
+    document.querySelectorAll(".nouns-tab").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".nouns-tab").forEach(t => t.classList.remove("active"));
+            btn.classList.add("active");
+            activeTab = btn.dataset.tab;
+            showListPanel();
+            renderList();
+        });
+    });
+
+    function setLoading(on) {
+        document.getElementById("nouns-loading").style.display = on ? "" : "none";
+        document.getElementById("nouns-list").innerHTML = "";
+        document.getElementById("nouns-empty").style.display = "none";
+    }
+
+    function showListPanel() {
+        document.getElementById("nouns-list-panel").style.display = "";
+        document.getElementById("nouns-detail-panel").style.display = "none";
+        document.getElementById("nouns-footer-list").style.display = "";
+        document.getElementById("nouns-footer-edit").style.display = "none";
+        activeNoun = null;
+    }
+
+    function showDetailPanel(noun) {
+        activeNoun = noun;
+        document.getElementById("nouns-list-panel").style.display = "none";
+        document.getElementById("nouns-detail-panel").style.display = "flex";
+        document.getElementById("nouns-footer-list").style.display = "none";
+        document.getElementById("nouns-footer-edit").style.display = "";
+        document.getElementById("nouns-detail-title").textContent = getNounName(noun);
+        document.getElementById("nouns-detail-edit").value = JSON.stringify(noun, null, 2);
+    }
+
+    function getNounName(noun) {
+        return noun?.noun?.name || noun?.name || "Unknown";
+    }
+
+    function getSummary(noun) {
+        return noun?.noun?.summary || noun?.summary || "";
+    }
+
+    function isAlwaysShow(noun) {
+        return noun?.noun?.always_show || noun?.always_show || false;
+    }
+
+    function renderList() {
+        const list = document.getElementById("nouns-list");
+        const empty = document.getElementById("nouns-empty");
+        document.getElementById("nouns-loading").style.display = "none";
+        list.innerHTML = "";
+
+        const entries = nounsData[activeTab] || [];
+        if (entries.length === 0) {
+            empty.style.display = "";
+            return;
+        }
+        empty.style.display = "none";
+
+        entries.forEach(noun => {
+            const li = document.createElement("li");
+            li.className = "nouns-list-item";
+
+            const info = document.createElement("div");
+            info.className = "nouns-item-info";
+
+            const nameSpan = document.createElement("span");
+            nameSpan.className = "nouns-item-name";
+            nameSpan.textContent = getNounName(noun);
+            info.appendChild(nameSpan);
+
+            const summary = getSummary(noun);
+            if (summary) {
+                const summarySpan = document.createElement("span");
+                summarySpan.className = "nouns-item-summary";
+                summarySpan.textContent = summary;
+                info.appendChild(summarySpan);
+            }
+
+            li.appendChild(info);
+
+            if (isAlwaysShow(noun)) {
+                const badge = document.createElement("span");
+                badge.className = "nouns-item-badge";
+                badge.textContent = "always";
+                li.appendChild(badge);
+            }
+
+            li.addEventListener("click", () => showDetailPanel(noun));
+            list.appendChild(li);
+        });
+    }
+
+    async function loadNouns() {
+        setLoading(true);
+        try {
+            const res = await fetch(`${API_BASE}/get_nouns`);
+            if (!res.ok) throw new Error("Failed to fetch nouns");
+            nounsData = await res.json();
+        } catch (e) {
+            console.error("loadNouns error", e);
+            nounsData = {};
+        }
+        renderList();
+    }
+
+    document.getElementById("nouns-back-btn").addEventListener("click", () => {
+        showListPanel();
+        renderList();
+    });
+
+    document.getElementById("nouns-cancel-btn").addEventListener("click", () => {
+        showListPanel();
+        renderList();
+    });
+
+    document.getElementById("nouns-save-btn").addEventListener("click", async () => {
+        const saveBtn = document.getElementById("nouns-save-btn");
+        const rawText = document.getElementById("nouns-detail-edit").value;
+        let parsed;
+        try {
+            parsed = JSON.parse(rawText);
+        } catch (e) {
+            showToast("Invalid JSON — check your edits.");
+            return;
+        }
+
+        saveBtn.disabled = true;
+        try {
+            const res = await fetch(`${API_BASE}/overwrite_noun`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(parsed)
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                showToast(`Save failed: ${data.error || res.statusText}`);
+            } else {
+                showToast("Saved.");
+                await loadNouns();
+                showListPanel();
+            }
+        } catch (e) {
+            showToast(`Error: ${e.message}`);
+        } finally {
+            saveBtn.disabled = false;
+        }
+    });
+
+    document.getElementById("btn-nouns").addEventListener("click", async () => {
+        openModal("modal-nouns");
+        showListPanel();
+        await loadNouns();
+    });
+})();
+// --- end Nouns modal ---
 
 // --- Manage Stories modal ---
 (function () {

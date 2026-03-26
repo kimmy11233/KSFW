@@ -99,8 +99,8 @@ Total length: two to three sentences. No more.
 
 ---
 
-{World Definition}
+<import>World Definition</import>
 
 ---
 
-{Player Character}
+<import>{Player Character}</import>

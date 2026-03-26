@@ -44,8 +44,11 @@
                 <h3>Control Panel</h3>
                 <div class="control-buttons">
                     <button class="control-btn" id="btn-inventory">Inventory</button>
+                    <button class="control-btn" id="btn-nouns">Nouns</button>
                     <button class="control-btn" id="btn-memory">Memory</button>
-                    <button class="control-btn" id="btn-stories">Manage Stories</button>
+                </div>
+                <div class="control-buttons-secondary">
+                    <button class="control-btn control-btn-wide" id="btn-stories">Manage Stories</button>
                 </div>
             </div>
 
@@ -127,6 +130,43 @@
         </div>
     </div>
     <div id="toast" class="toast toast-hidden"></div>
+
+    <!-- Nouns Modal -->
+    <div id="modal-nouns" class="modal-overlay" aria-hidden="true">
+        <div class="modal-box modal-box--nouns">
+            <div class="modal-header">
+                <span class="modal-title">Proper Nouns</span>
+                <button class="modal-close" data-modal="modal-nouns">&times;</button>
+            </div>
+            <div class="nouns-tab-bar" id="nouns-tab-bar">
+                <button class="nouns-tab active" data-tab="characters">Characters</button>
+                <button class="nouns-tab" data-tab="locations">Locations</button>
+                <button class="nouns-tab" data-tab="factions">Factions</button>
+                <button class="nouns-tab" data-tab="items">Items</button>
+            </div>
+            <div class="modal-body nouns-body">
+                <div id="nouns-list-panel">
+                    <ul id="nouns-list" class="nouns-list"></ul>
+                    <div id="nouns-empty" class="nouns-empty" style="display:none;">Nothing here yet.</div>
+                    <div id="nouns-loading" class="nouns-loading">Loading&hellip;</div>
+                </div>
+                <div id="nouns-detail-panel" style="display:none;">
+                    <div id="nouns-detail-header">
+                        <button id="nouns-back-btn" class="nouns-back-btn">&#8592; Back</button>
+                        <span id="nouns-detail-title"></span>
+                    </div>
+                    <textarea id="nouns-detail-edit" class="modal-textarea nouns-detail-textarea"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer" id="nouns-footer-list">
+                <button class="modal-btn ghost" onclick="closeModal('modal-nouns')">Close</button>
+            </div>
+            <div class="modal-footer" id="nouns-footer-edit" style="display:none;">
+                <button class="modal-btn ghost" id="nouns-cancel-btn">Cancel</button>
+                <button class="modal-btn primary" id="nouns-save-btn">Save</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Agent Response Modal -->
     <div id="modal-agent-response" class="modal-overlay" aria-hidden="true">

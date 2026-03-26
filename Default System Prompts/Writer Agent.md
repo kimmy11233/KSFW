@@ -130,8 +130,8 @@ Write as a skilled author of erotic fiction. Vivid, character-driven, physically
 
 ---
 
-{World Definition}
+<import>World Definition</import>
 
 ---
 
-{Player Character}
+<import>{Player Character}</import>

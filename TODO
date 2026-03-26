@@ -24,6 +24,14 @@ X Refactor load/create pipleine with the roleplay and story object
     - Significant items
 X Backup system
 - The main system seems to be really rushing and not stopping when the play input is requested, perhaps another agent this one to prepare just a stop beat
-- The main agent needs to stop understanding gag speech
-- the initial message is never showing
-- Fetch the last message and the compiled prompt for an agent by clicking on them
+X The main agent needs to stop understanding gag speech
+X the initial message is never showing
+X Fetch the last message and the compiled prompt for an agent by clicking on them
+- Update Memory system
+    - Events are pretty good
+    - Facts are incredibly messy and should be fully replaced with the proper noun system. They are repeating lots of the same thing over and over action and listing a lot of random things 
+    - Rules are far too broad. Standing rules are both out of date and not covering long term rules. It shouldn't track restraints
+    - Schedual is not super clean, Arangement and access Is neat but again its really only talking about restraints
+    - Inventory needs a little work with conditions, conditions are being applied to fast
+    - Current state is pretty good
+    - Characters is falling out of date
