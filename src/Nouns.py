@@ -183,6 +183,26 @@ class Noun_Controller():
             except json.JSONDecodeError as e:
                 print(f"[SEEDING] Error decoding JSON from player character definition retrieval: {e}")
 
+        nouns_def = None
+        if os.path.exists(f"{story_template_directory}/Nouns.md"):
+            with open(f"{story_template_directory}/Nouns.md", "r", encoding='utf-8') as md_file:
+                nouns_def = md_file.read()
+                
+        if nouns_def is not None:
+            response: str = await self.generator_agent.generate_text_in_background(
+                f'[SEEDING NOUN REPOSITORY WITH INITIAL NOUNS DEFINED IN NOUNS.md]\n'
+                f"## Nouns Definition\n{nouns_def}\n",
+                temperature=0.4,
+            )
+            try:
+                parsed_response = json.loads(response)
+                for noun_data in parsed_response:
+                    noun = _noun_from_data(noun_data)
+                    print(f"[SEEDING] Adding noun from Nouns.md: {noun.noun.name}")
+                    self.noun_repository[noun.noun.name] = noun
+            except json.JSONDecodeError as e:
+                print(f"[SEEDING] Error decoding JSON from nouns definition retrieval: {e}")
+
     def get_short_list(self):
         factions = [self.noun_repository.factions[key].noun.to_dict() for key in self.noun_repository.factions]
         characters = [self.noun_repository.characters[key].noun.to_dict() for key in self.noun_repository.characters]
