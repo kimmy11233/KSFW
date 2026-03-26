@@ -35,3 +35,7 @@ X Update Memory system
     - Inventory needs a little work with conditions, conditions are being applied to fast
     - Current state is pretty good
     - Characters is falling out of date
+
+- The gag speech agent is firing far too often
+- We need a better way of generating worlds, the seeing and starting process is a little messy.
+- Checker system needs to be updated for memory V2
