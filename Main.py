@@ -1,6 +1,6 @@
 # !/usr/bin/env python3
 from src.Roleplay import Roleplay
-from src.Nouns import _noun_from_data
+from src.Nouns import NounType, _noun_from_data
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -149,19 +149,16 @@ async def overwrite_noun_endpoint(req: Request):
     data = await req.json()
     try:
         noun = _noun_from_data(data)
-
-        if noun.noun.type not in ["character", "faction", "location", "item"]:
-            return JSONResponse({"error": "Invalid noun type"}, status_code=400)
         if ROLEPLAY_SYSTEM is None:
             return JSONResponse({"error": "No story loaded"}, status_code=400)
         
-        if noun.noun.type == "character":
+        if noun.noun.type == NounType.CHARACTER:
             ROLEPLAY_SYSTEM.STORY.nouns_controller.noun_repository.characters[noun.noun.name] = noun
-        elif noun.noun.type == "faction":
+        elif noun.noun.type == NounType.FACTION:
             ROLEPLAY_SYSTEM.STORY.nouns_controller.noun_repository.factions[noun.noun.name] = noun
-        elif noun.noun.type == "location":
+        elif noun.noun.type == NounType.LOCATION:
             ROLEPLAY_SYSTEM.STORY.nouns_controller.noun_repository.locations[noun.noun.name] = noun
-        elif noun.noun.type == "item":
+        elif noun.noun.type == NounType.ITEM:
             ROLEPLAY_SYSTEM.STORY.nouns_controller.noun_repository.items[noun.noun.name] = noun
         return JSONResponse({"status": "success"})
     
