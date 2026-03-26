@@ -49,14 +49,16 @@ def get_messages():
             "messages": [],
             "memory": "",
             "inventory": "",
-            "turn_number": 0
+            "turn_number": 0,
+            "time_estimate": ""
         }
     return {
         "title": ROLEPLAY_SYSTEM.STORY.title,
         "messages": [m.to_dict() for m in ROLEPLAY_SYSTEM.STORY.messages],
         "memory": ROLEPLAY_SYSTEM.STORY.memory,
         "inventory": ROLEPLAY_SYSTEM.STORY.inventory,
-        "turn_number": ROLEPLAY_SYSTEM.STORY.turn_number
+        "turn_number": ROLEPLAY_SYSTEM.STORY.turn_number,
+        "time_estimate": ROLEPLAY_SYSTEM.STORY.last_time_est 
     }
 
 

@@ -11,6 +11,7 @@ const promptInput = document.getElementById("prompt-input");
 const promptSend = document.getElementById("prompt-send");
 const promptRestore = document.getElementById("prompt-restore");
 const storyTitleDiv = document.getElementById("story-title");
+const storyTimeDiv  = document.getElementById("story-time");
 const turnValueSpan = document.getElementById("turn-value");
 const plannerThinking = document.getElementById("planner-thinking");
 
@@ -19,9 +20,14 @@ storyImage.addEventListener('load', () => { storyImage.style.display = ''; });
 storyImage.addEventListener('error', () => { storyImage.style.display = 'hidden'; });
 
 // Example: updateStoryInfo('My Story', 5)
-function updateStoryInfo(title, turn) {
+function updateStoryInfo(title, turn, timeEst) {
     if (storyTitleDiv) storyTitleDiv.textContent = title;
     if (turnValueSpan) turnValueSpan.textContent = (turn + '').padStart(1, ' ');
+    if (storyTimeDiv) {
+        const match = (timeEst || '').match(/Current:\s*(.+)/i);
+        storyTimeDiv.textContent = match ? match[1].trim() : '';
+        storyTimeDiv.style.display = match ? '' : 'none';
+    }
 }
 
 
@@ -83,7 +89,7 @@ function renderMessages(data) {
     const title = data.title;
     const turn_number = data.turn_number;
 
-    updateStoryInfo(title, turn_number);
+    updateStoryInfo(title, turn_number, data.time_estimate);
 
     messagesDiv.innerHTML = "";
     if (!messages || messages.length === 0) {
@@ -125,45 +131,37 @@ function renderAgents(agents) {
     agents.forEach(agent => {
         const li = document.createElement("li");
         li.className = "agent-item";
- 
-        // Status dot
-        const dot = document.createElement("span");
-        dot.className = `agent-dot ${agent.status}`;
-        li.appendChild(dot);
- 
-        // Agent name + response time
-        const timeText = agent.last_response_time ? ` - ${parseFloat(agent.last_response_time).toFixed(2)}s` : "";
-        const nameSpan = document.createElement("span");
-        nameSpan.className = "agent-name";
-        nameSpan.textContent = `${agent.name}${timeText}`;
-        li.appendChild(nameSpan);
- 
-        // Token usage row (only shown after first response)
+        if (agent.status === "busy")    li.classList.add("agent-busy");
+        if (agent.status === "errored") li.classList.add("agent-errored");
+
+        // Token circle with JS tooltip
+        const ctxCircle = document.createElement("span");
+        ctxCircle.className = "agent-ctx-circle";
         if (agent.last_usage) {
             const { prompt_tokens, completion_tokens, total_tokens, context_pct } = agent.last_usage;
             const pct = context_pct ?? 0;
- 
-            const tokenRow = document.createElement("div");
-            tokenRow.className = "agent-token-row";
- 
-            // Circle filled proportionally to context usage via conic-gradient
-            const ctxCircle = document.createElement("span");
-            ctxCircle.className = "agent-ctx-circle";
-            ctxCircle.title = `${pct}% of context window used`;
-            ctxCircle.style.background =
-                `conic-gradient(var(--accent) ${pct}%, var(--bar) ${pct}%)`;
-            tokenRow.appendChild(ctxCircle);
- 
-            // "1,234 tokens (2.4%)"
-            const tokenText = document.createElement("span");
-            tokenText.className = "agent-token-text";
-            tokenText.textContent = `${total_tokens.toLocaleString()} tokens (${pct}%)`;
-            tokenText.title = `Prompt: ${prompt_tokens.toLocaleString()}  Completion: ${completion_tokens.toLocaleString()}`;
-            tokenRow.appendChild(tokenText);
- 
-            li.appendChild(tokenRow);
+            ctxCircle.style.background = `conic-gradient(var(--accent) ${pct}%, var(--bar) ${pct}%)`;
+            const tipHtml = `<strong>${pct}% ctx</strong><br>${total_tokens.toLocaleString()} total<br>` +
+                `${prompt_tokens.toLocaleString()} prompt<br>${completion_tokens.toLocaleString()} completion`;
+            ctxCircle.addEventListener("mouseenter", (e) => showAgentTooltip(e, tipHtml));
+            ctxCircle.addEventListener("mouseleave", hideAgentTooltip);
         }
- 
+        li.appendChild(ctxCircle);
+
+        // Agent name
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "agent-name";
+        nameSpan.textContent = agent.name;
+        li.appendChild(nameSpan);
+
+        // Response time
+        if (agent.last_response_time) {
+            const timeSpan = document.createElement("span");
+            timeSpan.className = "agent-time";
+            timeSpan.textContent = `${parseFloat(agent.last_response_time).toFixed(2)}s`;
+            li.appendChild(timeSpan);
+        }
+
         li.dataset.agentId = agent.id;
         li.addEventListener("click", () => openAgentResponseModal(agent.id, agent.name));
         agentList.appendChild(li);
@@ -217,7 +215,7 @@ async function pollAll() {
     renderAgents(agents);
     renderImage(imageUrl);
 
-    updateStoryInfo(messages.title, messages.turn_number);
+    updateStoryInfo(messages.title, messages.turn_number, messages.time_estimate);
         
 }
 
@@ -388,6 +386,36 @@ promptForm.addEventListener("submit", async (e) => {
     // Only poll after streaming is done
     pollAll();
 });
+// --- Agent tooltip ---
+const _agentTooltipEl = document.createElement("div");
+_agentTooltipEl.id = "agent-tooltip";
+_agentTooltipEl.className = "agent-ctx-tooltip";
+document.body.appendChild(_agentTooltipEl);
+
+function showAgentTooltip(e, html) {
+    _agentTooltipEl.innerHTML = html;
+    _agentTooltipEl.style.display = "block";
+    positionAgentTooltip(e);
+}
+function hideAgentTooltip() {
+    _agentTooltipEl.style.display = "none";
+}
+document.addEventListener("mousemove", (e) => {
+    if (_agentTooltipEl.style.display === "block") positionAgentTooltip(e);
+});
+function positionAgentTooltip(e) {
+    const pad = 12;
+    const tw = _agentTooltipEl.offsetWidth;
+    const th = _agentTooltipEl.offsetHeight;
+    let x = e.clientX + pad;
+    let y = e.clientY - th - pad;
+    if (x + tw > window.innerWidth - 4) x = e.clientX - tw - pad;
+    if (y < 4) y = e.clientY + pad;
+    _agentTooltipEl.style.left = x + "px";
+    _agentTooltipEl.style.top  = y + "px";
+}
+// --- end Agent tooltip ---
+
 // --- Agent Response Modal ---
 async function openAgentResponseModal(agentId, agentName) {
     document.getElementById("agent-response-title").textContent = agentName + " \u2014 Last Response";
@@ -397,11 +425,7 @@ async function openAgentResponseModal(agentId, agentName) {
     try {
         const res = await fetch(`${API_BASE}/get_agent_last_response?agent_id=${encodeURIComponent(agentId)}`);
         const data = await res.json();
-        if (!res.ok) {
-            content.textContent = data.error || "Failed to load response.";
-        } else {
-            content.textContent = data.last_response;
-        }
+        content.textContent = res.ok ? data.last_response : (data.error || "Failed to load response.");
     } catch (e) {
         content.textContent = "Error: " + e.message;
     }
