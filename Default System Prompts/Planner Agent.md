@@ -108,4 +108,4 @@ Total length: two to three sentences. No more.
 
 ---
 
-<import>{Player Character}</import>
+<import>Player Character</import>

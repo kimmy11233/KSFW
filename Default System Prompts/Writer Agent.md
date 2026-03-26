@@ -141,4 +141,4 @@ Write as a skilled author of erotic fiction. Vivid, character-driven, physically
 
 ---
 
-<import>{Player Character}</import>
+<import>Player Character</import>
