@@ -790,6 +790,7 @@ document.getElementById("inventory-save-btn").addEventListener("click", async ()
                             throw new Error(error?.error ?? 'Unknown Error');
                         }
                         setStatus("Story created!");
+                        renderMessages(await fetchMessages()); // immediately update title/turn while waiting for first poll
                         startPolling();
                         await pollAll();
                         setTimeout(() => closeModal("modal-stories"), 800);

@@ -25,3 +25,4 @@ X Refactor load/create pipleine with the roleplay and story object
 X Backup system
 - The main system seems to be really rushing and not stopping when the play input is requested, perhaps another agent this one to prepare just a stop beat
 - The main agent needs to stop understanding gag speech
+- the initial message is never showing
