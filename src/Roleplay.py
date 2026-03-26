@@ -29,6 +29,7 @@ MEMORY_EVENTS_ID           = "memory_events_agent"
 MEMORY_CHARACTER_ID        = "memory_character_agent"
 MEMORY_CURRENT_STATE_ID    = "memory_current_state_agent"
 MEMORY_RULES_ID            = "memory_rules_agent"
+STOP_POINT_AGENT           = "stop_point_agent"
 
 
 async def _ensure(task: asyncio.Task):
@@ -36,8 +37,8 @@ async def _ensure(task: asyncio.Task):
     without blocking the caller if they haven't finished yet."""
     try:
         await task
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Error in {_ensure.__name__}: {e}")
 
 
 class Roleplay():
@@ -61,20 +62,21 @@ class Roleplay():
             raise ValueError('Please define DEEPSEEK_API_KEY in the .env file')
 
         # ── Agents ────────────────────────────────────────────────────────────
-        writer_agent                = TextAgent(WRITER_ID,            "Writer Agent",          "", deep)
-        planner_agent               = TextAgent(PLANNER_ID,           "Planner Agent",         "", deep)
-        checker_restraint_agent     = TextAgent(CHECKER_RESTRAINT_ID, "Restraint Checker",     "", deep)
-        checker_world_agent         = TextAgent(CHECKER_WORLD_ID,     "World Checker",         "", deep)
-        checker_character_agent     = TextAgent(CHECKER_CHARACTER_ID, "Character Checker",     "", deep)
-        checker_memory_agent        = TextAgent(CHECKER_MEMORY_ID,    "Memory Checker",        "", deep)
-        fixer_agent                 = TextAgent(FIXER_ID,             "Fixer Agent",           "", deep)
-        inventory_agent             = TextAgent(INVENTORY_ID,         "Inventory Agent",       "", deep)
-        time_estimation_agent       = TextAgent(TIME_ID,              "Time Estimation Agent", "", deep)
-        memory_facts_agent          = TextAgent(MEMORY_FACTS_ID,      "Facts Agent",    "", deep)
-        memory_events_agent         = TextAgent(MEMORY_EVENTS_ID,     "Events Agent",   "", deep)
-        memory_character_agent      = TextAgent(MEMORY_CHARACTER_ID,  "Character Agent", "", deep)
+        writer_agent                = TextAgent(WRITER_ID,            "Writer Agent",           "", deep)
+        planner_agent               = TextAgent(PLANNER_ID,           "Planner Agent",          "", deep)
+        checker_restraint_agent     = TextAgent(CHECKER_RESTRAINT_ID, "Restraint Checker",      "", deep)
+        checker_world_agent         = TextAgent(CHECKER_WORLD_ID,     "World Checker",          "", deep)
+        checker_character_agent     = TextAgent(CHECKER_CHARACTER_ID, "Character Checker",      "", deep)
+        checker_memory_agent        = TextAgent(CHECKER_MEMORY_ID,    "Memory Checker",         "", deep)
+        fixer_agent                 = TextAgent(FIXER_ID,             "Fixer Agent",            "", deep)
+        inventory_agent             = TextAgent(INVENTORY_ID,         "Inventory Agent",        "", deep)
+        time_estimation_agent       = TextAgent(TIME_ID,              "Time Estimation Agent",  "", deep)
+        memory_facts_agent          = TextAgent(MEMORY_FACTS_ID,      "Facts Agent",            "", deep)
+        memory_events_agent         = TextAgent(MEMORY_EVENTS_ID,     "Events Agent",           "", deep)
+        memory_character_agent      = TextAgent(MEMORY_CHARACTER_ID,  "Character Agent",        "", deep)
         memory_current_state_agent  = TextAgent(MEMORY_CURRENT_STATE_ID, "Current State Agent", "", deep)
-        memory_rules_agent          = TextAgent(MEMORY_RULES_ID,      "Rules Agent",    "", deep)
+        memory_rules_agent          = TextAgent(MEMORY_RULES_ID,      "Rules Agent",            "", deep)
+        stop_point_agent           = TextAgent(STOP_POINT_AGENT,     "Stop Point Agent",        "", deep)
 
         self.AGENTS = {
             WRITER_ID:            writer_agent,
@@ -91,6 +93,7 @@ class Roleplay():
             MEMORY_CHARACTER_ID:  memory_character_agent,
             MEMORY_CURRENT_STATE_ID: memory_current_state_agent,
             MEMORY_RULES_ID:      memory_rules_agent,
+            STOP_POINT_AGENT:     stop_point_agent,
         }
 
         # ── System prompt compilation ──────────────────────────────────────────
@@ -110,6 +113,7 @@ class Roleplay():
         compiler.compile_system_prompt(memory_character_agent,     "Character Agent")
         compiler.compile_system_prompt(memory_current_state_agent, "Current State Agent")
         compiler.compile_system_prompt(memory_rules_agent,         "Rules Agent")
+        compiler.compile_system_prompt(stop_point_agent,           "Stop Point Agent")
 
         # Write compiled prompts to ./tmp for debugging
         os.makedirs("./tmp", exist_ok=True)
@@ -151,12 +155,14 @@ class Roleplay():
         )
         return await self.AGENTS[WRITER_ID].generate_text_in_background(hydrated, temperature=1.0)
 
-    async def _stream_writer(self, prompt: str, past_messages: str):
+    async def _stream_writer(self, prompt: str, past_messages: str, stop_point: str):
         """Stream the writer agent response. Yields str chunks."""
         hydrated = (
             f"{self._build_world_state_header()}"
             f"---\n"
             f"# Story So Far\n{past_messages}\n"
+            f"---\n"
+            f"## Stop Point\n{stop_point}\n"
             f"---\n"
             f"## Planner Note\n{self.STORY.plan or 'No planner note yet.'}\n"
             f"---\n"
@@ -437,6 +443,17 @@ class Roleplay():
             f"[WRITER OUTPUT]\n{writer_output}",
             temperature=0.3,
         )
+    
+    async def _call_get_stop_point(self, writer_output: str, prompt: str) -> str:
+        """
+        Stop point agent — identifies a safe point in the text for the fixer to splice in corrections.
+        Returns a single sentence string representing the stop point.
+        """
+        return await self.AGENTS[STOP_POINT_AGENT].generate_text_in_background(
+            f"[PLAYER INPUT]\n{prompt}\n"
+            f"[LAST OUTPUT]\n{writer_output}\n",
+            temperature=0.3,
+        )
  
     async def _call_memory_rules(self, writer_output: str) -> str:
         """
@@ -647,14 +664,16 @@ class Roleplay():
           4. Commit final message to story
           (Background update and planner run concurrently throughout steps 3-4)
         """
-        past_messages = "\n".join([f"{m.agent_name}: {m.content}" for m in self.STORY.messages[-5:]])
+        past_messages = "\n".join([f"{m.agent_name}: {m.content}" for m in self.STORY.messages[-10:]])
         self.STORY.messages.append(Message("User", prompt))
 
         writer_output = ""
+        # ── 1. Stop point ───────────────────────────────────────────────────
+        stop_point = await self._call_get_stop_point(self.STORY.messages[-1], prompt)
 
-        # ── 1. Stream writer ───────────────────────────────────────────────────
+        # ── 2. Stream writer ───────────────────────────────────────────────────
         try:
-            async for chunk in self._stream_writer(prompt, past_messages):
+            async for chunk in self._stream_writer(prompt, past_messages, stop_point):
                 writer_output += chunk
                 yield chunk
         except Exception as e:
@@ -662,7 +681,7 @@ class Roleplay():
             yield f"\n\n[Writer error: {str(e)}]"
             return
 
-        # ── 2. Fire background + checkers + planner all at once ──────────────
+        # ── 3. Fire background + checkers + planner all at once ──────────────
         # Background data only needs writer_output and can run immediately.
         # Any fix from the fixer will be caught by the checkers next turn.
         print("[Pipeline] Writer done — background, checkers, and planner all starting")
@@ -680,7 +699,7 @@ class Roleplay():
         # before the next player input arrives (best-effort; won't block the client)
         asyncio.create_task(_ensure(planner_task))
 
-        # ── 3. Apply window fixes and stream diff events ─────────────────────
+        # ── 4. Apply window fixes and stream diff events ─────────────────────
         # Each yielded line is newline-delimited JSON.
         # {"op": "diff_start"} signals the client to switch to diff mode.
         # Subsequent ops update the message in place, back-to-front.
@@ -691,7 +710,7 @@ class Roleplay():
 
         final_output = self._last_fix_output if self._last_fix_output is not None else writer_output
 
-        # ── 4. Commit to story ─────────────────────────────────────────────────
+        # ── 5. Commit to story ─────────────────────────────────────────────────
         self.STORY.messages.append(Message(self.AGENTS[WRITER_ID].name, final_output))
         self.STORY.save()
 
