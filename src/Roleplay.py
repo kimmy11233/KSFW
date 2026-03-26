@@ -652,7 +652,7 @@ class Roleplay():
           4. Commit final message to story
           (Background update and planner run concurrently throughout steps 3-4)
         """
-        past_messages = "\n".join([f"{m.agent_name}: {m.content}" for m in self.STORY.messages[-10:]])
+        past_messages = "\n".join([f"{m.agent_name}: {m.content}" for m in self.STORY.messages[-30:]])
         self.STORY.messages.append(Message("User", prompt))
 
         writer_output = ""
@@ -722,7 +722,9 @@ class Roleplay():
 
         # Write all agent responses to files for debugging
         for agent in self.AGENTS.values():
-            agent.write_last_response_to_file()
+            out_dir = f'./tmp/{os.path.basename(self.STORY.load_path)}'
+            os.makedirs(out_dir, exist_ok=True)
+            agent.write_last_response_to_file(out_dir)
 
         usage = self.AGENTS[WRITER_ID].last_usage
         if usage and usage.get("context_pct", 0) > 50:

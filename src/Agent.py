@@ -1,3 +1,4 @@
+import json
 import os
 import asyncio
 from abc import ABC
@@ -126,9 +127,11 @@ class TextAgent(Agent):
     def write_last_response_to_file(self, directory="./tmp"):
         self.last_response_file_path = os.path.join(directory, f"{self.name.replace(' ', '_')}_last_response.txt")
         if self.last_response:
+
+            out = f"Agent Name: {self.name}\nPrompt:\n{self.last_prompt}\n\nResponse:\n{self.last_response}\n\nUsage:\n{json.dumps(self.last_usage, indent=2)}"
             os.makedirs(directory, exist_ok=True)
             with open(self.last_response_file_path, 'w', encoding='utf-8') as f:
-                f.write(self.last_response)
+                f.write(out)
 
 
 class ImageAgent(Agent):
