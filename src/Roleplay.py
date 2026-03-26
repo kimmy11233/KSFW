@@ -147,7 +147,7 @@ class Roleplay():
         return (
             f"# World State\n"
             f"## Turn Number\n{self.STORY.turn_number}\n"
-            f"## Persistent Facts\n{self.STORY.memory}\n"
+            f"## Persistent Facts\n{self.STORY.memory.get_memory_summary()}\n"
             f"## Inventory\n{self.STORY.inventory}\n"
             f"## Time Since Last Turn\n{self.STORY.last_time_est}\n"
             f"## Short List\n{self.STORY.nouns_controller.get_short_list()}\n"
