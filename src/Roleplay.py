@@ -696,8 +696,9 @@ class Roleplay():
         asyncio.create_task(_ensure(nouns_task))
 
         # Checkers must finish before we can decide whether to fix
-        await checker_task
-        check_restraint, check_world, check_character, check_memory = checker_task.result()
+        if False:
+            await checker_task
+            check_restraint, check_world, check_character, check_memory = checker_task.result()
 
         # Planner runs in parallel with checkers — await to ensure it's cached
         # before the next player input arrives (best-effort; won't block the client)
@@ -707,10 +708,11 @@ class Roleplay():
         # Each yielded line is newline-delimited JSON.
         # {"op": "diff_start"} signals the client to switch to diff mode.
         # Subsequent ops update the message in place, back-to-front.
-        async for event_line in self._apply_fix_if_needed(
-            writer_output, check_restraint, check_world, check_character, check_memory
-        ):
-            yield event_line
+        if False:
+            async for event_line in self._apply_fix_if_needed(
+                writer_output, check_restraint, check_world, check_character, check_memory
+            ):
+                yield event_line
 
         final_output = self._last_fix_output if self._last_fix_output is not None else writer_output
 
