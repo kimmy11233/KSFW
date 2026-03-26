@@ -14,6 +14,19 @@ const storyTitleDiv = document.getElementById("story-title");
 const storyTimeDiv  = document.getElementById("story-time");
 const turnValueSpan = document.getElementById("turn-value");
 const plannerThinking = document.getElementById("planner-thinking");
+const scrollBtn = document.getElementById("scroll-to-bottom");
+
+// Show/hide scroll button based on scroll position
+function updateScrollBtn() {
+    const threshold = 60;
+    const atBottom = messagesDiv.scrollHeight - messagesDiv.scrollTop - messagesDiv.clientHeight < threshold;
+    scrollBtn.classList.toggle("scroll-btn-visible", !atBottom);
+}
+messagesDiv.addEventListener("scroll", updateScrollBtn, { passive: true });
+
+scrollBtn.addEventListener("click", () => {
+    messagesDiv.scrollTo({ top: messagesDiv.scrollHeight, behavior: "smooth" });
+});
 
 // If for whatever reason (missing image) we can't load an image, just hide it
 storyImage.addEventListener('load', () => { storyImage.style.display = ''; });
@@ -134,17 +147,13 @@ function renderAgents(agents) {
         if (agent.status === "busy")    li.classList.add("agent-busy");
         if (agent.status === "errored") li.classList.add("agent-errored");
 
-        // Token circle with JS tooltip
+        // Token circle (fill only)
         const ctxCircle = document.createElement("span");
         ctxCircle.className = "agent-ctx-circle";
         if (agent.last_usage) {
             const { prompt_tokens, completion_tokens, total_tokens, context_pct } = agent.last_usage;
             const pct = context_pct ?? 0;
             ctxCircle.style.background = `conic-gradient(var(--accent) ${pct}%, var(--bar) ${pct}%)`;
-            const tipHtml = `<strong>${pct}% ctx</strong><br>${total_tokens.toLocaleString()} total<br>` +
-                `${prompt_tokens.toLocaleString()} prompt<br>${completion_tokens.toLocaleString()} completion`;
-            ctxCircle.addEventListener("mouseenter", (e) => showAgentTooltip(e, tipHtml));
-            ctxCircle.addEventListener("mouseleave", hideAgentTooltip);
         }
         li.appendChild(ctxCircle);
 
@@ -154,13 +163,19 @@ function renderAgents(agents) {
         nameSpan.textContent = agent.name;
         li.appendChild(nameSpan);
 
-        // Response time
-        if (agent.last_response_time) {
-            const timeSpan = document.createElement("span");
-            timeSpan.className = "agent-time";
-            timeSpan.textContent = `${parseFloat(agent.last_response_time).toFixed(2)}s`;
-            li.appendChild(timeSpan);
+        // Right side: time + token info inline
+        const metaSpan = document.createElement("span");
+        metaSpan.className = "agent-meta";
+        if (agent.last_usage) {
+            const { total_tokens, context_pct } = agent.last_usage;
+            const pct = context_pct ?? 0;
+            const timeStr = agent.last_response_time ? `${parseFloat(agent.last_response_time).toFixed(1)}s` : "";
+            const tokStr = `${(total_tokens / 1000).toFixed(1)}k ${pct}%`;
+            metaSpan.textContent = [timeStr, tokStr].filter(Boolean).join(" � ");
+        } else if (agent.last_response_time) {
+            metaSpan.textContent = `${parseFloat(agent.last_response_time).toFixed(1)}s`;
         }
+        li.appendChild(metaSpan);
 
         li.dataset.agentId = agent.id;
         li.addEventListener("click", () => openAgentResponseModal(agent.id, agent.name));
@@ -386,35 +401,6 @@ promptForm.addEventListener("submit", async (e) => {
     // Only poll after streaming is done
     pollAll();
 });
-// --- Agent tooltip ---
-const _agentTooltipEl = document.createElement("div");
-_agentTooltipEl.id = "agent-tooltip";
-_agentTooltipEl.className = "agent-ctx-tooltip";
-document.body.appendChild(_agentTooltipEl);
-
-function showAgentTooltip(e, html) {
-    _agentTooltipEl.innerHTML = html;
-    _agentTooltipEl.style.display = "block";
-    positionAgentTooltip(e);
-}
-function hideAgentTooltip() {
-    _agentTooltipEl.style.display = "none";
-}
-document.addEventListener("mousemove", (e) => {
-    if (_agentTooltipEl.style.display === "block") positionAgentTooltip(e);
-});
-function positionAgentTooltip(e) {
-    const pad = 12;
-    const tw = _agentTooltipEl.offsetWidth;
-    const th = _agentTooltipEl.offsetHeight;
-    let x = e.clientX + pad;
-    let y = e.clientY - th - pad;
-    if (x + tw > window.innerWidth - 4) x = e.clientX - tw - pad;
-    if (y < 4) y = e.clientY + pad;
-    _agentTooltipEl.style.left = x + "px";
-    _agentTooltipEl.style.top  = y + "px";
-}
-// --- end Agent tooltip ---
 
 // --- Agent Response Modal ---
 async function openAgentResponseModal(agentId, agentName) {

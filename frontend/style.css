@@ -475,11 +475,43 @@ body {
     padding-right: 20px;
 }
 
+#scroll-to-bottom {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 20px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bar);
+    border: 1px solid #555;
+    color: #aaa;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+    user-select: none;
+}
+#scroll-to-bottom.scroll-btn-visible {
+    opacity: 1;
+    pointer-events: all;
+}
+#scroll-to-bottom:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
 #prompt-form {
     display: flex;
     padding: 16px;
     background: var(--panel-bg);
     border-top: 2px solid var(--bar);
+    position: relative;
 }
 
 #prompt-input {
@@ -676,11 +708,12 @@ body {
     min-width: 0;
 }
 
-.agent-time {
-    font-size: 0.68rem;
+.agent-meta {
+    font-size: 0.65rem;
     color: #888;
     white-space: nowrap;
     flex-shrink: 0;
+    margin-left: auto;
 }
 
 /* Circular context fill indicator */
@@ -696,26 +729,9 @@ body {
     cursor: default;
 }
 
-/* Body-level tooltip — positioned by JS */
-#agent-tooltip {
-    display: none;
-    position: fixed;
-    z-index: 9999;
-    background: #1a1820;
-    border: 1px solid var(--accent);
-    border-radius: 6px;
-    padding: 7px 11px;
-    font-size: 0.72rem;
-    color: var(--foreground);
-    line-height: 1.7;
-    white-space: nowrap;
-    box-shadow: 0 4px 18px #000a;
-    pointer-events: none;
-}
 
-#agent-tooltip strong {
-    color: var(--accent);
-}
+
+
 
 /* --- end diff highlighting --- */
 
@@ -906,3 +922,14 @@ body {
     animation: diff-insert-in 0.4s ease-out forwards;
 }
 /* --- end diff highlighting --- */
+/* --- Agent response modal --- */
+.modal-box--agent-response {
+    width: clamp(340px, 65vw, 860px);
+    height: 80vh;
+}
+.agent-response-pre {
+    font-size: 0.8rem;
+    line-height: 1.7;
+    color: #ddd;
+}
+/* --- end agent response modal --- */
