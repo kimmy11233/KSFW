@@ -132,6 +132,7 @@ class Roleplay():
         """Shared context block injected into most agent prompts."""
         return (
             f"# World State\n"
+            f"## Turn Number\n{self.STORY.turn_number}\n"
             f"## Persistent Facts\n{self.STORY.memory}\n"
             f"## Inventory\n{self.STORY.inventory}\n"
             f"## Time Since Last Turn\n{self.STORY.last_time_est}\n"
