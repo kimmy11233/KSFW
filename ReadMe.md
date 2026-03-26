@@ -58,6 +58,7 @@ You can copy the template `__blank__` or start from any other story you have.
 * Edits sometimes be editing when they dont need editing. Because this is still in the work sometimes a violation is fired when the actual
 story is fine, the agent is just a little happy to set it on fire, its annoying but harmless. I hope to kill it, testing will help.
 * The gagspeach detector can fire a little too easily, I am actively working on it. If it happens copy your last message, rollback a turn and past it in adding "I am not gagged"
+* It is normal for it to hang for a sec when you create a new story, its because its seeding the story, seeding the inventory getting everything set up. I need to make it more responsive but just let it do its thing.
 
 ### Usage
 - Access the web UI to start a new story or load a saved one.
