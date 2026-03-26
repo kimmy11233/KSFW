@@ -24,9 +24,7 @@ CHECKER_MEMORY_ID          = "checker_memory"
 FIXER_ID                   = "fixer_agent"
 INVENTORY_ID               = "inventory_agent"
 TIME_ID                    = "time_estimation_agent"
-MEMORY_FACTS_ID            = "memory_facts_agent"
 MEMORY_EVENTS_ID           = "memory_events_agent"
-MEMORY_CHARACTER_ID        = "memory_character_agent"
 MEMORY_CURRENT_STATE_ID    = "memory_current_state_agent"
 MEMORY_RULES_ID            = "memory_rules_agent"
 STOP_POINT_AGENT           = "stop_point_agent"
@@ -74,9 +72,7 @@ class Roleplay():
         fixer_agent                 = TextAgent(FIXER_ID,             "Fixer Agent",            "", deep)
         inventory_agent             = TextAgent(INVENTORY_ID,         "Inventory Agent",        "", deep)
         time_estimation_agent       = TextAgent(TIME_ID,              "Time Estimation Agent",  "", deep)
-        memory_facts_agent          = TextAgent(MEMORY_FACTS_ID,      "Facts Agent",            "", deep)
         memory_events_agent         = TextAgent(MEMORY_EVENTS_ID,     "Events Agent",           "", deep)
-        memory_character_agent      = TextAgent(MEMORY_CHARACTER_ID,  "Character Agent",        "", deep)
         memory_current_state_agent  = TextAgent(MEMORY_CURRENT_STATE_ID, "Current State Agent", "", deep)
         memory_rules_agent          = TextAgent(MEMORY_RULES_ID,      "Rules Agent",            "", deep)
         stop_point_agent            = TextAgent(STOP_POINT_AGENT,     "Stop Point Agent",        "", deep)
@@ -95,9 +91,7 @@ class Roleplay():
             TIME_ID:              time_estimation_agent,
             PLANNER_ID:           planner_agent,
             FIXER_ID:             fixer_agent,
-            MEMORY_FACTS_ID:      memory_facts_agent,
             MEMORY_EVENTS_ID:     memory_events_agent,
-            MEMORY_CHARACTER_ID:  memory_character_agent,
             MEMORY_CURRENT_STATE_ID: memory_current_state_agent,
             MEMORY_RULES_ID:      memory_rules_agent,
             STOP_POINT_AGENT:     stop_point_agent,
@@ -119,9 +113,7 @@ class Roleplay():
         compiler.compile_system_prompt(fixer_agent,                "Fixer Agent")
         compiler.compile_system_prompt(inventory_agent,            "Inventory Manager")
         compiler.compile_system_prompt(time_estimation_agent,      "Time Estimator")
-        compiler.compile_system_prompt(memory_facts_agent,         "Facts Agent")
         compiler.compile_system_prompt(memory_events_agent,        "Events Agent")
-        compiler.compile_system_prompt(memory_character_agent,     "Character Agent")
         compiler.compile_system_prompt(memory_current_state_agent, "Current State Agent")
         compiler.compile_system_prompt(memory_rules_agent,         "Rules Agent")
         compiler.compile_system_prompt(stop_point_agent,           "Stop Point Agent")
@@ -422,37 +414,6 @@ class Roleplay():
                 events.append(line)
         return events
  
-    async def _call_memory_facts(self, writer_output: str) -> list[str]:
-        """
-        Facts agent — append only.
-        Returns a list of new fact strings to extend self.STORY.memory.facts.
-        Returns an empty list if no new facts were established.
-        """
-        result = await self.AGENTS[MEMORY_FACTS_ID].generate_text_in_background(
-            f"[WRITER OUTPUT]\n{writer_output}",
-            temperature=0.1,
-        )
-        result = result.strip()
-        if not result or result.upper() == "NO_FACTS":
-            return []
-        facts = []
-        for line in result.splitlines():
-            line = line.strip().lstrip("-").strip()
-            if line:
-                facts.append(line)
-        return facts
- 
-    async def _call_memory_characters(self, writer_output: str) -> str:
-        """
-        Characters agent — update in place.
-        Returns the full updated [CHARACTERS] block as a string.
-        """
-        return await self.AGENTS[MEMORY_CHARACTER_ID].generate_text_in_background(
-            f"[CHARACTERS]\n{self.STORY.memory.characters_raw}\n\n"
-            f"[WRITER OUTPUT]\n{writer_output}",
-            temperature=0.3,
-        )
- 
     async def _call_memory_current_state(self, writer_output: str) -> str:
         """
         Current state agent — full rewrite each turn.
@@ -492,8 +453,9 @@ class Roleplay():
         Returns the updated [RULES & ROUTINES] block as a string.
         """
         return await self.AGENTS[MEMORY_RULES_ID].generate_text_in_background(
-            f"[RULES & ROUTINES]\n{self.STORY.memory.rules}\n\n"
-            f"[WRITER OUTPUT]\n{writer_output}",
+            f"[STANDING RULES & SCHEDULE]\n{self.STORY.memory.rules}\n\n"
+            f"[WRITER OUTPUT]\n{writer_output}\n"
+            f"[CURRENT TIME]\n{self.STORY.last_time_est}\n",
             temperature=0.1,
         )
  
@@ -501,39 +463,36 @@ class Roleplay():
         """
         Orchestrates all five memory agents concurrently.
         Current state runs every turn.
-        Events, facts, characters, and rules run every turn but are cheap
-        (events/facts return NO_EVENTS/NO_FACTS most turns).
+        Events, characters, and rules run every turn but are cheap
+        (events return NO_EVENTS most turns).
         Writes results directly back to self.STORY.memory.
         """
-        current_state, events, facts, characters, rules = await asyncio.gather(
+        current_state, events, rules = await asyncio.gather(
             self._call_memory_current_state(writer_output),
             self._call_memory_events(writer_output),
-            self._call_memory_facts(writer_output),
-            self._call_memory_characters(writer_output),
             self._call_memory_rules(writer_output),
         )
  
         self.STORY.memory.current_state   = current_state
         self.STORY.memory.rules           = rules
-        self.STORY.memory.characters_raw  = characters
  
         if events:
             self.STORY.memory.events.extend(events)
             print(f"[Memory] {len(events)} new event(s) appended")
  
-        if facts:
-            self.STORY.memory.facts.extend(facts)
-            print(f"[Memory] {len(facts)} new fact(s) appended")
- 
         print("[Memory] All sections updated")
 
     async def _call_inventory_update(self, writer_output: str) -> str:
         """Inventory agent. Returns updated inventory string."""
+        writer_messages = [m for m in self.STORY.messages if m.agent_name != "User"]
+        message_before_last = writer_messages[-2].content if len(writer_messages) >= 2 else "[STORY START]"
         return await self.AGENTS[INVENTORY_ID].generate_text_in_background(
             f"## Current Inventory\n{self.STORY.inventory}\n"
             f"---\n"
-            f"## Writer Output\n{writer_output}\n"
-            f'## Last Time Estimate and Time\n{self.STORY.last_time_est}\n',
+            f"## Writer Output - Previous Turn\n{message_before_last}\n"
+            f"---\n"
+            f"## Writer Output - Current Turn\n{writer_output}\n"
+            f"## Last Time Estimate and Time\n{self.STORY.last_time_est}\n",
             temperature=0.1,
         )
 
@@ -698,7 +657,8 @@ class Roleplay():
 
         writer_output = ""
         # ── 1. User input agents───────────────────────────────────────────────────
-        stop_point_task = asyncio.create_task(self._call_get_stop_point(self.STORY.messages[-2:], prompt))
+        last_output = self.STORY.messages[-1].content if self.STORY.messages else "[STORY START]"
+        stop_point_task = asyncio.create_task(self._call_get_stop_point(last_output, prompt))
         gag_speech_task = asyncio.create_task(self._call_gag_speech(prompt))
         get_nouns_task = asyncio.create_task(self.STORY.nouns_controller.get_injected_nouns(self.STORY.messages[-2:], self.STORY.plan))
 
@@ -711,7 +671,7 @@ class Roleplay():
         for noun in nouns_miss:
             print(f"[NOUNS] Query miss for: {noun}")
 
-        self.noun_block = "\n".join(f"- {n}" for n in nouns) if nouns else "None"
+        self.noun_block = "\n\n".join(json.dumps(n.to_dict(), indent=2) for n in nouns) if nouns else "None"
 
         # ── 2. Stream writer ───────────────────────────────────────────────────
         try:
@@ -733,6 +693,7 @@ class Roleplay():
         checker_task    = asyncio.create_task(self._run_checkers(writer_output, past_messages))
         planner_task    = asyncio.create_task(self._cache_planner_note(past_with_output))
         nouns_task      = asyncio.create_task(self.STORY.nouns_controller.update_nouns(writer_output))
+        asyncio.create_task(_ensure(nouns_task))
 
         # Checkers must finish before we can decide whether to fix
         await checker_task

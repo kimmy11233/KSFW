@@ -119,8 +119,7 @@ async def overwrite_memory(req: Request):
 
     data = await req.json()
     memory_sector = data.get("memory_sector", "")
-    memory_sector = 'characters' if memory_sector == "characters_raw" else memory_sector
-    if memory_sector not in ["events", "facts", "rules", "characters"]:
+    if memory_sector not in ["events", "rules"]:
         return JSONResponse({"error": "Invalid memory sector"}, status_code=400)
 
     new_memory = data.get("memory", "")
@@ -128,15 +127,8 @@ async def overwrite_memory(req: Request):
         if type(new_memory) is not list:
             return JSONResponse({"error": "Events memory must be a list of strings"}, status_code=400)
         ROLEPLAY_SYSTEM.STORY.memory.overwrite_events(new_memory)
-    elif memory_sector == "facts":
-        if type(new_memory) is not list:
-            return JSONResponse({"error": "Facts memory must be a list of strings"}, status_code=400)
-
-        ROLEPLAY_SYSTEM.STORY.memory.overwrite_facts(new_memory)
     elif memory_sector == "rules":
         ROLEPLAY_SYSTEM.STORY.memory.overwrite_rules(new_memory)
-    elif memory_sector == "characters":
-        ROLEPLAY_SYSTEM.STORY.memory.overwrite_characters(new_memory)
     ROLEPLAY_SYSTEM.STORY.save()
     return JSONResponse({"status": "success", "new_memory": ROLEPLAY_SYSTEM.STORY.memory.to_dict()})
 

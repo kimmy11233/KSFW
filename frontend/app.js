@@ -559,9 +559,7 @@ document.getElementById("inventory-save-btn").addEventListener("click", async ()
     // Section definitions — order controls tab order
     const SECTIONS = [
         { key: "current_state", label: "Current State", type: "text" },
-        { key: "characters_raw", label: "Characters",   type: "text" },
         { key: "rules",         label: "Rules",         type: "text" },
-        { key: "facts",         label: "Facts",         type: "list" },
         { key: "events",        label: "Events",        type: "list" },
     ];
 
