@@ -57,6 +57,7 @@ You can copy the template `__blank__` or start from any other story you have.
 * Edits sometimes butcher whitespace. We love vibe code jank!
 * Edits sometimes be editing when they dont need editing. Because this is still in the work sometimes a violation is fired when the actual
 story is fine, the agent is just a little happy to set it on fire, its annoying but harmless. I hope to kill it, testing will help.
+* The gagspeach detector can fire a little too easily, I am actively working on it. If it happens copy your last message, rollback a turn and past it in adding "I am not gagged"
 
 ### Usage
 - Access the web UI to start a new story or load a saved one.
