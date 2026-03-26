@@ -794,6 +794,8 @@ document.getElementById("inventory-save-btn").addEventListener("click", async ()
                         startPolling();
                         await pollAll();
                         setTimeout(() => closeModal("modal-stories"), 800);
+                        promptInput.value = "</admin> [STORY START]";
+                        promptForm.requestSubmit();
                     } catch (e) { setStatus(e.toString()); }
                 });
                 list.appendChild(li);

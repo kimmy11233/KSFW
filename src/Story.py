@@ -22,7 +22,6 @@ class Story():
         # Hydrate a new story object
         self.title = config_file.get("title", "Untitled Story")
         self.messages: list[Message] = []
-        self.messages.append(Message("System", config_file.get("initial_prompt", "")))
         self.memory = Memory()
         self.turn_number = 0
         self.message_cutoff_index = 0
