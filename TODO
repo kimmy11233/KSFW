@@ -7,17 +7,17 @@ X As text is rendered on the front end it moves making it very hard to read. We 
 X Messages are popping if they are shorter than a screen length
 X Checkers
 X APplying diffs to frontend
-- Add better character mannager (X) Seperate from memory
+X Add better character mannager (X) Seperate from memory
 - Better character selection
 X Images fuck up their aspect ratio
 - Hovering over edited text should show the violation 
-- conditions in inventory never expires, update time prediction to give an actual time such that inventory can remove conditions over time.
-- Add a little grey arrow in the bottom left to move you to the bottom of the story
+X conditions in inventory never expires, update time prediction to give an actual time such that inventory can remove conditions over time.
+X Add a little grey arrow in the bottom left to move you to the bottom of the story
 X The Inventory and Memory buttons should always be availible, but their edit buttons should be locked if the background tasks are working. Editing memory now works(X)
 X? Somewhere we lost the grey line above the user mesage
 X? When we force the user message up we should make room for the planning sprite, maybe like a few pixels more
 X Refactor load/create pipleine with the roleplay and story object
-- Proper noun system that reads a chat determins the current proper nouns, which is referenced to actual objects. A generater generates the objects when a new thing comes. 
+X Proper noun system that reads a chat determins the current proper nouns, which is referenced to actual objects. A generater generates the objects when a new thing comes. 
     - Factions
     - Characters
     - Locations
@@ -27,7 +27,7 @@ X Backup system
 X The main agent needs to stop understanding gag speech
 X the initial message is never showing
 X Fetch the last message and the compiled prompt for an agent by clicking on them
-- Update Memory system
+X Update Memory system
     - Events are pretty good
     - Facts are incredibly messy and should be fully replaced with the proper noun system. They are repeating lots of the same thing over and over action and listing a lot of random things 
     - Rules are far too broad. Standing rules are both out of date and not covering long term rules. It shouldn't track restraints
