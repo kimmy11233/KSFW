@@ -714,7 +714,8 @@ class Roleplay():
             ):
                 yield event_line
 
-        final_output = self._last_fix_output if self._last_fix_output is not None else writer_output
+            final_output = self._last_fix_output if self._last_fix_output is not None else writer_output
+        final_output = writer_output  # Skip fixer for now
 
         # ── 5. Commit to story ─────────────────────────────────────────────────
         self.STORY.messages.append(Message(self.AGENTS[WRITER_ID].name, final_output))
