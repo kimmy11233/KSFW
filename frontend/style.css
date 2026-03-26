@@ -864,3 +864,28 @@ body {
     animation: diff-insert-in 0.4s ease-out forwards;
 }
 /* --- end diff highlighting --- */
+/* --- Agent response modal --- */
+.modal-box--agent-response {
+    width: clamp(340px, 65vw, 860px);
+    height: 80vh;
+}
+
+.agent-response-pre {
+    font-size: 0.8rem;
+    line-height: 1.7;
+    color: #ddd;
+}
+
+/* Make agent items look clickable */
+.agent-item {
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin-left: -4px;
+    transition: background 0.15s;
+}
+
+.agent-item:hover {
+    background: color-mix(in srgb, var(--bar) 60%, var(--accent));
+}
+/* --- end agent response modal --- */

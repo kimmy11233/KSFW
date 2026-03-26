@@ -19,6 +19,8 @@ class Agent(ABC):
         self.status = AgentStatus.READY
         self.start_time = None
 
+        self.last_response_file_path = None 
+
     def set_status(self, status: AgentStatus):
         self.status = status
         if status == AgentStatus.BUSY:
@@ -122,9 +124,10 @@ class TextAgent(Agent):
         return d
 
     def write_last_response_to_file(self, directory="./tmp"):
+        self.last_response_file_path = os.path.join(directory, f"{self.name.replace(' ', '_')}_last_response.txt")
         if self.last_response:
             os.makedirs(directory, exist_ok=True)
-            with open(os.path.join(directory, f"{self.name.replace(' ', '_')}_last_response.txt"), 'w', encoding='utf-8') as f:
+            with open(self.last_response_file_path, 'w', encoding='utf-8') as f:
                 f.write(self.last_response)
 
 

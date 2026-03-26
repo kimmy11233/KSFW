@@ -182,6 +182,25 @@ def get_templates():
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
 
+@app.get("/api/get_agent_last_response")
+async def get_agent_last_response(agent_id: str):
+    if ROLEPLAY_SYSTEM is None:
+        return JSONResponse({"error": "No story loaded"}, status_code=400)
+
+    agent = ROLEPLAY_SYSTEM.AGENTS.get(agent_id)
+    if agent is None:
+        return JSONResponse({"error": "Agent not found"}, status_code=404)
+
+    if not hasattr(agent, "last_response_file_path") or agent.last_response_file_path is None:
+        return JSONResponse({"error": "No last response available"}, status_code=404)
+
+    try:
+        with open(agent.last_response_file_path, 'r', encoding='utf-8') as f:
+            last_response = f.read()
+        return JSONResponse({"last_response": last_response})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
 
 @app.post("/api/create_from_template")
 async def create_from_template(req: Request):

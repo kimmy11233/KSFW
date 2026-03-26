@@ -165,6 +165,7 @@ function renderAgents(agents) {
         }
  
         li.dataset.agentId = agent.id;
+        li.addEventListener("click", () => openAgentResponseModal(agent.id, agent.name));
         agentList.appendChild(li);
     });
     updatePromptSendState(agentStatus);
@@ -387,6 +388,26 @@ promptForm.addEventListener("submit", async (e) => {
     // Only poll after streaming is done
     pollAll();
 });
+// --- Agent Response Modal ---
+async function openAgentResponseModal(agentId, agentName) {
+    document.getElementById("agent-response-title").textContent = agentName + " \u2014 Last Response";
+    const content = document.getElementById("agent-response-content");
+    content.textContent = "Loading...";
+    openModal("modal-agent-response");
+    try {
+        const res = await fetch(`${API_BASE}/get_agent_last_response?agent_id=${encodeURIComponent(agentId)}`);
+        const data = await res.json();
+        if (!res.ok) {
+            content.textContent = data.error || "Failed to load response.";
+        } else {
+            content.textContent = data.last_response;
+        }
+    } catch (e) {
+        content.textContent = "Error: " + e.message;
+    }
+}
+// --- end Agent Response Modal ---
+
 // --- Modal helpers ---
 function isInputLocked() {
     return promptSend && promptSend.disabled;

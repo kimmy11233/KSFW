@@ -125,6 +125,22 @@
         </div>
     </div>
     <div id="toast" class="toast toast-hidden"></div>
+
+    <!-- Agent Response Modal -->
+    <div id="modal-agent-response" class="modal-overlay" aria-hidden="true">
+        <div class="modal-box modal-box--agent-response">
+            <div class="modal-header">
+                <span class="modal-title" id="agent-response-title">Agent Response</span>
+                <button class="modal-close" data-modal="modal-agent-response">&times;</button>
+            </div>
+            <div class="modal-body">
+                <pre id="agent-response-content" class="modal-pre agent-response-pre">Loading...</pre>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn ghost" onclick="closeModal('modal-agent-response')">Close</button>
+            </div>
+        </div>
+    </div>
     <script src="app.js"></script>
 </body>
 </html>
