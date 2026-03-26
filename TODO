@@ -26,3 +26,4 @@ X Backup system
 - The main system seems to be really rushing and not stopping when the play input is requested, perhaps another agent this one to prepare just a stop beat
 - The main agent needs to stop understanding gag speech
 - the initial message is never showing
+- Fetch the last message and the compiled prompt for an agent by clicking on them

@@ -30,6 +30,7 @@ MEMORY_CHARACTER_ID        = "memory_character_agent"
 MEMORY_CURRENT_STATE_ID    = "memory_current_state_agent"
 MEMORY_RULES_ID            = "memory_rules_agent"
 STOP_POINT_AGENT           = "stop_point_agent"
+GAG_SPEECH_AGENT           = "gag_speech_agent"
 
 
 async def _ensure(task: asyncio.Task):
@@ -76,7 +77,8 @@ class Roleplay():
         memory_character_agent      = TextAgent(MEMORY_CHARACTER_ID,  "Character Agent",        "", deep)
         memory_current_state_agent  = TextAgent(MEMORY_CURRENT_STATE_ID, "Current State Agent", "", deep)
         memory_rules_agent          = TextAgent(MEMORY_RULES_ID,      "Rules Agent",            "", deep)
-        stop_point_agent           = TextAgent(STOP_POINT_AGENT,     "Stop Point Agent",        "", deep)
+        stop_point_agent            = TextAgent(STOP_POINT_AGENT,     "Stop Point Agent",        "", deep)
+        gag_speech_agent            = TextAgent(GAG_SPEECH_AGENT,     "Gag Speech Agent",      "", deep)
 
         self.AGENTS = {
             WRITER_ID:            writer_agent,
@@ -94,6 +96,7 @@ class Roleplay():
             MEMORY_CURRENT_STATE_ID: memory_current_state_agent,
             MEMORY_RULES_ID:      memory_rules_agent,
             STOP_POINT_AGENT:     stop_point_agent,
+            GAG_SPEECH_AGENT:    gag_speech_agent,
         }
 
         # ── System prompt compilation ──────────────────────────────────────────
@@ -114,6 +117,7 @@ class Roleplay():
         compiler.compile_system_prompt(memory_current_state_agent, "Current State Agent")
         compiler.compile_system_prompt(memory_rules_agent,         "Rules Agent")
         compiler.compile_system_prompt(stop_point_agent,           "Stop Point Agent")
+        compiler.compile_system_prompt(gag_speech_agent,           "Gag Speech Agent")
 
         # Write compiled prompts to ./tmp for debugging
         os.makedirs("./tmp", exist_ok=True)
@@ -454,6 +458,17 @@ class Roleplay():
             f"[LAST OUTPUT]\n{writer_output}\n",
             temperature=0.3,
         )
+    
+    async def _call_gag_speech(self, prompt: str) -> str:
+        """
+        Gag speech agent — identifies if the player's input contains out-of-character speech that should be hidden from the writer.
+        Returns either "GAG" or "NO GAG".
+        """
+        return await self.AGENTS[GAG_SPEECH_AGENT].generate_text_in_background(
+            f"[INVENTORY]\n{self.STORY.inventory}\n\n"
+            f"[PLAYER INPUT]\n{prompt}\n",
+            temperature=0.4,
+        )
  
     async def _call_memory_rules(self, writer_output: str) -> str:
         """
@@ -668,8 +683,14 @@ class Roleplay():
         self.STORY.messages.append(Message("User", prompt))
 
         writer_output = ""
-        # ── 1. Stop point ───────────────────────────────────────────────────
-        stop_point = await self._call_get_stop_point(self.STORY.messages[-1], prompt)
+        # ── 1. User input agents───────────────────────────────────────────────────
+        stop_point_task = asyncio.create_task(self._call_get_stop_point(self.STORY.messages[-1], prompt))
+        gag_speech_task = asyncio.create_task(self._call_gag_speech(prompt))
+
+        await asyncio.gather(stop_point_task, gag_speech_task)
+        stop_point = stop_point_task.result()
+        gag_speech = gag_speech_task.result()
+        prompt = gag_speech
 
         # ── 2. Stream writer ───────────────────────────────────────────────────
         try:
