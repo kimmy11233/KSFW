@@ -158,6 +158,7 @@ class Roleplay():
             f"## Persistent Facts\n{self.STORY.memory}\n"
             f"## Inventory\n{self.STORY.inventory}\n"
             f"## Time Since Last Turn\n{self.STORY.last_time_est}\n"
+            f"## Short List\n{self.STORY.nouns_controller.get_short_list()}\n"
             f"## Nouns\n{self.noun_block or 'None'}\n"
         )
 
