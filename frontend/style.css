@@ -243,7 +243,17 @@
 .control-buttons {
     display: flex;
     gap: 10px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+}
+
+.control-buttons-secondary {
+    display: flex;
+    margin-top: 8px;
+}
+
+.control-btn-wide {
+    flex: 1;
+    width: 100%;
 }
 .control-btn {
     padding: 8px 18px;

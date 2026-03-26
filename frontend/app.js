@@ -725,6 +725,7 @@ document.getElementById("inventory-save-btn").addEventListener("click", async ()
             document.querySelectorAll(".nouns-tab").forEach(t => t.classList.remove("active"));
             btn.classList.add("active");
             activeTab = btn.dataset.tab;
+            showListPanel();
             renderList();
         });
     });
