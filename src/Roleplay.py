@@ -47,7 +47,7 @@ class Roleplay():
 
         self.STORY: Story = story
         self.COMPRESSION_TURN = self.STORY.config.get("compression_turn", 20)
-        self.GAG_SPEECH_OVERWRITE = self.STORY.config.get("gag_speech_overwrite", True)
+        self.GAG_SPEECH_OVERWRITE = self.STORY.config.get("gag_speech_overwrite", False)
         self.IMAGE_GENERATION_ENABLED = False
 
         # ── Connectors ────────────────────────────────────────────────────────
