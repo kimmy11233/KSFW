@@ -161,9 +161,6 @@ class Noun_Controller():
                     self.noun_repository[noun.noun.name] = noun
             except json.JSONDecodeError as e:
                 print(f"[SEEDING] Error decoding JSON from world definition retrieval: {e}")
-
-            print(f"[SEEDING] Seeding complete.")
-
         
         player_def = None
         if os.path.exists(f"{story_template_directory}/Player Character.md"):
@@ -204,6 +201,7 @@ class Noun_Controller():
                     self.noun_repository[noun.noun.name] = noun
             except json.JSONDecodeError as e:
                 print(f"[SEEDING] Error decoding JSON from nouns definition retrieval: {e}")
+        print(f"[SEEDING] Seeding complete.")
 
     def get_short_list(self):
         factions = [self.noun_repository.factions[key].noun.to_dict() for key in self.noun_repository.factions]
