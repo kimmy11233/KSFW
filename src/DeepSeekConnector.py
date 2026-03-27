@@ -24,6 +24,9 @@ class DeepSeekAPIConnector(ILLMConnector):
     def get_max_context_length(self) -> int:
         """Return the max context window in tokens for the current model."""
         return DEEPSEEK_CONTEXT_LENGTHS.get(self.model, 64000)
+    
+    def get_api_name(self) -> str:
+        return f'DeepSeek ({self.model})'
 
     def _headers(self):
         return {

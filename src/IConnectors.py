@@ -16,6 +16,11 @@ class ILLMConnector(ABC):
         """Return the max context window in tokens for the current model."""
         pass
 
+    @abstractmethod
+    def get_api_name(self) -> str:
+        """ Return the name of the API used, to display in the UI """
+        return ''
+
     def _format_usage(self, raw_usage: dict) -> dict:
         """Normalise usage dict and append context_pct."""
         prompt_tokens = raw_usage.get("prompt_tokens", 0)

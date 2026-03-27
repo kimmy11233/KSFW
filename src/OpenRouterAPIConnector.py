@@ -7,35 +7,53 @@ from src.IConnectors import ILLMConnector
 load_dotenv()
 
 
-DONE_REASONS = ("stop", "length", "end_turn", "tool_calls", "content_filter")
 class OpenRouterAPIConnector(ILLMConnector):
 
-    def __init__(self, api_key: str):
-        self.api_key = api_key
-        self.OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
+    API_URL: str = "https://openrouter.ai/api/v1/chat/completions"
+    DONE_REASONS: tuple[str, ...] = ("stop", "length", "end_turn", "tool_calls", "content_filter")
+    
+    # Okay so I had many issues setting this up, and I need a real testbed of the openrouter API to
+    # figure out what to do. But this works for deepseek, which has:
+    # - Multiple providers, varies from $0.3/$0.5 to $0.6/$1.7
+    # - Some with abysmal tps though (3-4), we want around ~20tps
+    # - These two providers seem to give cheap but fast stats, so for now, we'll keep them
 
-    def get_max_context_length(self) -> int:
-        return 64000  # As long as we don't change the underlying model, it's still deepseek
+    def __init__(self, _api_key: str):
+        self._api_key: str = _api_key
+        self._model: str = 'deepseek/deepseek-v3.2'
+        self._context_length: int = 64_000
+        self._providers = { 'only': ['novita', 'atlas-cloud'] }
 
-    async def chat(self, system_prompt: str, user_prompt: str, temperature: float = 0.7) -> tuple[str, dict]:
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
+    def _get_header(self) -> dict:
+        return {
+            "Authorization": f"Bearer {self._api_key}",
             "Content-Type": "application/json"
         }
-        payload = {
-            "model": 'deepseek/deepseek-v3.2',
+
+    def _get_payload(self, system_prompt: str, user_prompt: str, temperature: float) -> dict:
+        return {
+            "model": self._model,
             "messages":  [{
                 "role": "system",
                 "content": system_prompt
-            },
-            {
+            }, {
                 "role": "user",
                 "content": user_prompt
             }],
-            "temperature": temperature
+            "temperature": temperature,
+            "provider": self._providers
         }
 
-        response = requests.post(self.OPENROUTER_API_URL, headers=headers, json=payload)
+    def get_max_context_length(self) -> int:
+        return self._context_length
+    
+    def get_api_name(self) -> str:
+        return f'OpenRouter ({self._model})'
+
+    async def chat(self, system_prompt: str, user_prompt: str, temperature: float = 0.7) -> tuple[str, dict]:
+        headers = self._get_header()
+        payload = self._get_payload(system_prompt, user_prompt, temperature)
+        response = requests.post(OpenRouterAPIConnector.API_URL, headers=headers, json=payload)
         response.raise_for_status()
         data = response.json()
         content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
@@ -44,29 +62,13 @@ class OpenRouterAPIConnector(ILLMConnector):
         return content, usage
 
     async def stream(self, system_prompt: str, user_prompt: str, temperature: float = 0.7):
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-
-        payload = {
-            "model": 'deepseek/deepseek-v3.2',
-            "messages":  [{
-                "role": "system",
-                "content": system_prompt
-            },
-            {
-                "role": "user",
-                "content": user_prompt
-            }],
-            "stream": True,
-            "temperature": temperature
-        }
- 
+        headers = self._get_header()
+        payload = self._get_payload(system_prompt, user_prompt, temperature)
+        payload['stream'] = True
         timeout = httpx.Timeout(connect=10.0, read=30.0, write=10.0, pool=5.0)
     
         async with httpx.AsyncClient(timeout=timeout) as client:
-            async with client.stream("POST", self.OPENROUTER_API_URL, headers=headers, json=payload) as response:
+            async with client.stream("POST", OpenRouterAPIConnector.API_URL, headers=headers, json=payload) as response:
                 response.raise_for_status()
     
                 async for line in response.aiter_lines():
@@ -89,7 +91,7 @@ class OpenRouterAPIConnector(ILLMConnector):
                     try:
                         data = json.loads(decoded_line)
                     except json.JSONDecodeError as e:
-                        print("Failed to parse JSON chunk")
+                        print(f"Failed to parse JSON chunk: {e}")
                         continue
     
                     choice = data.get("choices", [{}])[0]
@@ -99,6 +101,5 @@ class OpenRouterAPIConnector(ILLMConnector):
                     if content:
                         yield content
     
-                    if finish_reason in DONE_REASONS:
+                    if finish_reason in OpenRouterAPIConnector.DONE_REASONS:
                         yield None
-    
