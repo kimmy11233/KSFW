@@ -162,6 +162,8 @@ class Noun_Controller():
             except json.JSONDecodeError as e:
                 print(f"[SEEDING] Error decoding JSON from world definition retrieval: {e}")
 
+            print(f"[SEEDING] Seeding complete.")
+
         
         player_def = None
         if os.path.exists(f"{story_template_directory}/Player Character.md"):
