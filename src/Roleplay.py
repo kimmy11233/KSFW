@@ -445,7 +445,7 @@ class Roleplay():
         return await self.AGENTS[GAG_SPEECH_AGENT].generate_text_in_background(
             f"[INVENTORY]\n{self.STORY.inventory}\n\n"
             f"[PLAYER INPUT]\n{prompt}\n",
-            temperature=0.4,
+            temperature=0.1,
         )
  
     async def _call_memory_rules(self, writer_output: str) -> str:
