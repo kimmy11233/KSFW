@@ -239,11 +239,12 @@ class Noun_Controller():
         for update in updates:
             try:
                 update_dict = update if isinstance(update, dict) else json.loads(update)
-            except (json.JSONDecodeError, TypeError):
-                print(f"Invalid JSON update received: {update}")
+                update = NounDiff.from_response(update_dict)
+            except (json.JSONDecodeError, TypeError, ValueError) as e:
+                print(f"Invalid JSON update received: {update}, error: {e}")
                 continue
-
-            update = NounDiff.from_response(update_dict)
+                
+           
             noun = self.noun_repository.get(update.name)
 
             response: str = await self.__generate_update(update, noun, last_turn)

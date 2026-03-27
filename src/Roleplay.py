@@ -126,9 +126,9 @@ class Roleplay():
         self.noun_block = None
 
         # Write compiled prompts to ./tmp for debugging
-        os.makedirs("./tmp", exist_ok=True)
+        os.makedirs("./tmp/system_prompts", exist_ok=True)
         for agent_id, agent in self.AGENTS.items():
-            path = f"./tmp/system_prompt_{agent.name.replace(' ', '_')}.md"
+            path = f"./tmp/system_prompts/system_prompt_{agent.name.replace(' ', '_')}.md"
             with open(path, "w", encoding="utf-8") as f:
                 if isinstance(agent, ImageAgent):
                     f.write(f"Positive: {agent.positive_keywords}\n")
@@ -723,7 +723,7 @@ class Roleplay():
 
         # Write all agent responses to files for debugging
         for agent in self.AGENTS.values():
-            out_dir = f'./tmp/{os.path.basename(self.STORY.load_path)}'
+            out_dir = f'./tmp/{os.path.basename(self.STORY.load_path).replace(".json", "")}'
             os.makedirs(out_dir, exist_ok=True)
             agent.write_last_response_to_file(out_dir)
 

@@ -59,12 +59,13 @@ class SystemPromptCompiler:
             # For TextAgents, we can simply return the system prompt from the data registry
             prompt_template = self.data_registry.get(system_prompt_lookup, None)
             if prompt_template is not None:
-                required_lookups = re.findall(r'<input>([^<]+)</input>', prompt_template)
+                required_lookups = re.findall(r'<import>([^<]+)<\/import>', prompt_template)
 
                 for lookup in required_lookups:
                     if lookup in self.data_registry:
-                        prompt_template = prompt_template.replace(f"{{{lookup}}}", self.data_registry[lookup])
+                        prompt_template = prompt_template.replace(f"<import>{lookup}</import>", self.data_registry[lookup])
                     else:
+                        print(f"Error: Required system prompt '{lookup}' not found in data registry for '{system_prompt_lookup}'.")
                         raise ValueError(f"Required system prompt '{lookup}' not found in data registry for '{system_prompt_lookup}'.")
 
                 agent.system_prompt = prompt_template
