@@ -660,7 +660,8 @@ class Roleplay():
         # ── 1. User input agents───────────────────────────────────────────────────
         last_output = self.STORY.messages[-1].content if self.STORY.messages else "[STORY START]"
         stop_point_task = asyncio.create_task(self._call_get_stop_point(last_output, prompt))
-        get_nouns_task = asyncio.create_task(self.STORY.nouns_controller.get_injected_nouns(self.STORY.messages[-2:], self.STORY.plan))
+        past_two_messages = "\n".join([f"{m.agent_name}: {m.content}" for m in self.STORY.messages[-2:]])
+        get_nouns_task = asyncio.create_task(self.STORY.nouns_controller.get_injected_nouns(past_two_messages, self.STORY.plan))
         if self.GAG_SPEECH_OVERWRITE:
             gag_speech_task = asyncio.create_task(self._call_gag_speech(prompt))
         else:
