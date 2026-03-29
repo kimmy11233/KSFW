@@ -1,2 +1,1 @@
-
-python3 ./Main.py
+venv\Scripts\python.exe Main.py
